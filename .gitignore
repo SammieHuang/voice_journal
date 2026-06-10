@@ -1,5 +1,16 @@
+# macOS
+**/.DS_Store
+
+# dependencies
 node_modules
+
+# Expo
 .expo
+
+# env
 .env
+.env.local
+
+# build
 dist
-.DS_Store
+build
