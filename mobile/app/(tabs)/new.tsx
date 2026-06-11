@@ -1,31 +1,26 @@
 import { useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import useRecorder from "@/hooks/useRecorder";
 import { transcribeAudio } from "@/services/api";
+import EntryButton from "@/components/EntryButton/EntryButton";
+import { NewBtnStatus } from "@/types/types";
 
 export default function NewScreen() {
 
   const { isRecording, audioUri, startRecording, stopRecording } = useRecorder()
   const [transcript, setTranscript] = useState<string | null>(null)
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false)
+
+  
+
   
 
   return (
     <View
-      style={{
-        flex: 1,
-        backgroundColor: "#F8F1DD",
-        justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 24,
-      }}
+      style={styles.screen}
     >
       <Text
-        style={{
-          fontFamily: "SpecialElite_400Regular",
-          fontSize: 32,
-          color: "#3D3125",
-        }}
+        style={styles.title}
       >
         New Entry
       </Text>
@@ -45,35 +40,56 @@ export default function NewScreen() {
           {isRecording ? "Stop" : "Record"}
         </Text>
       </Pressable>
+
       {audioUri && (
         <Pressable
           onPress={async () => {
             if (!audioUri || isTranscribing) return;
-
             try {
-              setIsTranscribing(true)
-              const text = await transcribeAudio(audioUri)
-              setTranscript(text)
+              setIsTranscribing(true);
+              const text = await transcribeAudio(audioUri);
+              setTranscript(text);
             } catch (err) {
-              console.log(err)
+              console.log(err);
             } finally {
-              setIsTranscribing(false)
-              }
+              setIsTranscribing(false);
+            }
           }}
-          style={{
-            marginTop: 24,
-            paddingVertical: 14,
-            paddingHorizontal: 28,
-            borderRadius: 999,
-            backgroundColor: "#8A6F4D",
-          }}
+          style={styles.transcriptBtn}
         >
           <Text style={{ color: "#F8F1DD", fontSize: 16 }}>Transcribe</Text>
         </Pressable>
       )}
-      {transcript && <Text>
-        {transcript}
-      </Text>}
+      {transcript && <Text >{transcript}</Text>}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#F8F1DD",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  title: {
+    fontFamily: "SpecialElite_400Regular",
+    fontSize: 32,
+    color: "#3D3125",
+  },
+  transcript: {
+    marginTop: 24,
+    color: "#3D3125",
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: "center",
+  },
+  transcriptBtn: {
+    marginTop: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 999,
+    backgroundColor: "#8A6F4D",
+  },
+});
