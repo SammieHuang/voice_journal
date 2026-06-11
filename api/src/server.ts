@@ -3,6 +3,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import transcribeRouter from "./routes/transcribe";
 
 dotenv.config();
 
@@ -19,12 +20,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.post('/transcribe', (req, res) => {
-  res.json({
-    ok: true,
-    message: 'we are connected, yayyy'
-  })
-})
+app.use('/transcribe', transcribeRouter)
 
 app.listen(PORT, () => {
   console.log(`Judi's radio station broadcasting 24/7 at http://localhost:${PORT}`);

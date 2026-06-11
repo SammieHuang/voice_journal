@@ -1,6 +1,6 @@
 async function transcribeAudio(uri: string) {
     const formData = new FormData()
-    const API_BASE_URL = "http://localhost:3000";
+    const API_BASE_URL = "http://192.168.4.70:3000";
 
     formData.append(
         'audio', 
