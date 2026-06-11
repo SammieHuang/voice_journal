@@ -71,6 +71,9 @@ export default function NewScreen() {
           <Text style={{ color: "#F8F1DD", fontSize: 16 }}>Transcribe</Text>
         </Pressable>
       )}
+      {transcript && <Text>
+        {transcript}
+      </Text>}
     </View>
   );
 }

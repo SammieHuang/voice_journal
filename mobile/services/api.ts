@@ -1,5 +1,6 @@
 async function transcribeAudio(uri: string) {
     const formData = new FormData()
+    const API_BASE_URL = "http://localhost:3000";
 
     formData.append(
         'audio', 
@@ -10,7 +11,7 @@ async function transcribeAudio(uri: string) {
         } as any
     )
 
-    const response = await fetch(uri, {
+    const response = await fetch(`${API_BASE_URL}/transcribe`, {
         method: 'POST',
         body: formData
     })
@@ -21,7 +22,7 @@ async function transcribeAudio(uri: string) {
 
     const data = await response.json()
     
-    return data.text
+    return data.message
     
 }
 
