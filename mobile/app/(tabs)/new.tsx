@@ -1,19 +1,24 @@
-import { useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
-import useRecorder from "@/hooks/useRecorder";
-import { transcribeAudio } from "@/services/api";
-import EntryButton from "@/components/EntryButton/EntryButton";
-import { NewBtnStatus } from "@/types/types";
+import { View, Text,StyleSheet } from "react-native";
+import useCreateJournalEntry from "@/hooks/use-create-journal-entry";
+import RecordButton from "@/components/RecordButton/RecordButton";
+import { RecordStatusTypes } from "@/types/types";
 
 export default function NewScreen() {
+  const {
+    recordStatus,
+    transcript,
+    startRecording,
+    stopRecording,
+    startTranscribe,
+  } = useCreateJournalEntry();
 
-  const { isRecording, audioUri, startRecording, stopRecording } = useRecorder()
-  const [transcript, setTranscript] = useState<string | null>(null)
-  const [isTranscribing, setIsTranscribing] = useState<boolean>(false)
-
-  
-
-  
+  const getPressFunction = (recordStatus: RecordStatusTypes) => {
+    if (recordStatus === 'idle') return startRecording;
+    else if (recordStatus === 'recording') return stopRecording;
+    else if (recordStatus === 'readyToTranscribe') return startTranscribe;
+    
+    return async ()=>{}
+  }
 
   return (
     <View
@@ -24,42 +29,10 @@ export default function NewScreen() {
       >
         New Entry
       </Text>
-      <Pressable
-        style={{
-          marginTop: 60,
-          width: 120,
-          height: 120,
-          borderRadius: 60,
-          backgroundColor: isRecording ? "#9B3D30" : "#55624F",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-        onPress={isRecording ? stopRecording : startRecording}
-      >
-        <Text style={{ color: "#F8F1DD", fontSize: 18 }}>
-          {isRecording ? "Stop" : "Record"}
-        </Text>
-      </Pressable>
-
-      {audioUri && (
-        <Pressable
-          onPress={async () => {
-            if (!audioUri || isTranscribing) return;
-            try {
-              setIsTranscribing(true);
-              const text = await transcribeAudio(audioUri);
-              setTranscript(text);
-            } catch (err) {
-              console.log(err);
-            } finally {
-              setIsTranscribing(false);
-            }
-          }}
-          style={styles.transcriptBtn}
-        >
-          <Text style={{ color: "#F8F1DD", fontSize: 16 }}>Transcribe</Text>
-        </Pressable>
-      )}
+      <RecordButton
+        recordStatus={recordStatus}
+        onPress = {getPressFunction(recordStatus)}
+      />
       {transcript && <Text >{transcript}</Text>}
     </View>
   );

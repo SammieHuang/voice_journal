@@ -1,9 +1,10 @@
-type NewBtnStatus =
-    | 'idle'
-    | 'recording'
-    | 'readyToTranscribe'
-    | 'transcribing'
-    | 'preview'
+/** @format */
 
+type RecordStatusTypes =
+  | "idle"
+  | "recording"
+  | "readyToTranscribe"
+  | "transcribing"
+  | "preview";
 
-export {NewBtnStatus}
+export { RecordStatusTypes };
