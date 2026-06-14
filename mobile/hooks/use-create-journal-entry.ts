@@ -8,7 +8,7 @@ import {
 } from "expo-audio";
 import { useState } from "react";
 import { RecordStatusTypes } from "@/types/types";
-import { transcribeAudio } from "@/services/api";
+import { transcribeAudio } from "@/services/transcribe-service";
 
 export default function useCreateJournalEntry() {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -60,6 +60,12 @@ const startTranscribe = async () => {
     } finally {
       setIsTranscribing(false);
     }
+}
+  const resetEntry = () => {
+    setAudioUri(null)
+    setTranscript(null)
+    setRecordStatus('idle')
+    setIsTranscribing(false)
   }
 
   return {
@@ -68,6 +74,7 @@ const startTranscribe = async () => {
     transcript,
     startRecording,
     stopRecording,
-    startTranscribe
+    startTranscribe,
+    resetEntry
   };
 }
