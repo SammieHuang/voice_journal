@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
-import { router } from "expo-router";
-import { useEffect } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useEffect, useCallback } from "react";
 import useCreateJournalEntry from "@/hooks/use-create-journal-entry";
 import RecordButton from "@/components/RecordButton/RecordButton";
 import { RecordStatusTypes } from "@/types/types";
@@ -12,6 +12,7 @@ export default function NewScreen() {
     startRecording,
     stopRecording,
     startTranscribe,
+    resetEntry
   } = useCreateJournalEntry();
 
   const getPressFunction = (recordStatus: RecordStatusTypes) => {
@@ -30,6 +31,8 @@ export default function NewScreen() {
       })
     }
   }, [recordStatus, transcript])
+
+  useFocusEffect(useCallback(()=>resetEntry(), []))
 
 
   return (

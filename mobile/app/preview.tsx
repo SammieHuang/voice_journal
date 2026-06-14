@@ -2,6 +2,7 @@
 
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import { getJournals, saveJournals } from "@/services/journal-service";
 
 export default function PreviewScreen() {
   const { transcript } = useLocalSearchParams<{ transcript?: string }>();
@@ -21,7 +22,12 @@ export default function PreviewScreen() {
           <Text style={styles.discardText}>Discard</Text>
         </Pressable>
 
-        <Pressable style={styles.saveButton} onPress={() => {}}>
+        <Pressable
+          style={styles.saveButton}
+          onPress={() => {
+            if (transcript) saveJournals(transcript);
+          }}
+        >
           <Text style={styles.saveText}>Save Entry</Text>
         </Pressable>
       </View>
