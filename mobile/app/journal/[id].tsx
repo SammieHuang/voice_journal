@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView } from 'react-native'
-import { useLocalSearchParams } from "expo-router";
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native'
+import { router, useLocalSearchParams } from "expo-router";
 import { Journal } from "@/types/journal";
+import { Ionicons } from "@expo/vector-icons";
 import { getJournalById } from "@/services/journal-service";
 
 export default function JournalDetailScreen() {
@@ -29,11 +30,15 @@ export default function JournalDetailScreen() {
 
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={22} color="#8A6F4D" />
+          <Text style={styles.backText}>Journals</Text>
+        </Pressable>
         <Text style={styles.date}>
           {new Date(journal.createdAt).toLocaleDateString()}
         </Text>
 
-        <Text style={styles.transcript}>{journal.transcript}</Text> 
+        <Text style={styles.transcript}>{journal.transcript}</Text>
       </ScrollView>
     );
 }
@@ -64,5 +69,17 @@ const styles = StyleSheet.create({
     color: "#3D3125",
     fontSize: 20,
     lineHeight: 32,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 32,
+  },
+
+  backText: {
+    color: "#8A6F4D",
+    fontSize: 18,
+    marginLeft: 4,
+    fontFamily: "SpecialElite_400Regular",
   },
 });
