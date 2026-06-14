@@ -13,7 +13,7 @@ export const getJournalById = async (id: string): Promise<Journal | null> => {
     return journals.find(journal=>journal.id === id) ?? null
 }
 
-export const saveJournals = async (transcript: string): Promise<Journal> => {
+export const saveJournal = async (transcript: string): Promise<Journal> => {
     const newJournal: Journal = {
         id: Date.now().toString(),
         createdAt: new Date().toISOString(),
@@ -21,9 +21,16 @@ export const saveJournals = async (transcript: string): Promise<Journal> => {
     }
 
     const journals = await getJournals()
-    const updatedJournals = [...journals, newJournal]
+    const updatedJournals = [newJournal, ...journals];
 
     await AsyncStorage.setItem(JOURNAL_KEY, JSON.stringify(updatedJournals))
 
     return newJournal
+}
+
+export const deleteJournal = async (id: string): Promise<void> => {
+    const journals = await getJournals();
+    const updatedJournals = journals.filter((journal) => journal.id !== id);
+
+    await AsyncStorage.setItem(JOURNAL_KEY, JSON.stringify(updatedJournals))
 }
