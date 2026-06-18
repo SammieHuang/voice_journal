@@ -2,7 +2,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
-import { deleteJournal, getJournals } from "@/services/journal-service";
+import { deleteJournal, getCloudJournals, getLocalJournals } from "@/services/journal-service";
 import { Journal } from "@/types/journal";
 import { JournalCard } from "@/components/JournalCard/JournalCard";
 
@@ -13,7 +13,6 @@ export default function JournalsScreen() {
     await deleteJournal(id)
     setJournals(journals=>journals.filter(journal=>journal.id !== id))
   }
-
   const renderRightAction = (id: string) => {
     return (
       <View style={styles.actions}>
@@ -37,8 +36,16 @@ export default function JournalsScreen() {
   useFocusEffect(
     useCallback(() => {
       const loadJournals = async () => {
-        const savedJournals = await getJournals();
-        setJournals(savedJournals);
+        try {
+          const localJournals = await getLocalJournals()
+          setJournals(localJournals)
+
+          const cloudJournals = await getCloudJournals()
+          setJournals(cloudJournals)
+        } catch (err) {
+          console.log(`Failed to load journals`, err)
+        }
+
       };
 
       loadJournals();
