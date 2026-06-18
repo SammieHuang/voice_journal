@@ -17,6 +17,17 @@ export type Journal = {
   tags?: string[];
 };
 
+export type DbJournal = {
+  id: string;
+  created_at: string;
+  updated_at?: string;
+  transcript?: string;
+  audio_url?: string;
+  mood_score?: number;
+  mood_label?: MoodLabel
+  tags?: string[]
+}
+
 export type MoodLabel =
   | "happy"
   | "calm"
