@@ -1,12 +1,38 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { View, Text, StyleSheet, FlatList} from "react-native";
-import { getJournals } from "@/services/journal-service";
+import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
+import { deleteJournal, getJournals } from "@/services/journal-service";
 import { Journal } from "@/types/journal";
 import { JournalCard } from "@/components/JournalCard/JournalCard";
 
 export default function JournalsScreen() {
   const [journals, setJournals] = useState<Journal[]>([]);
+
+  const handleDelete = async (id: string) => {
+    await deleteJournal(id)
+    setJournals(journals=>journals.filter(journal=>journal.id !== id))
+  }
+
+  const renderRightAction = (id: string) => {
+    return (
+      <View style={styles.actions}>
+        <Pressable
+          style={[styles.actionButton, styles.editButton]}
+          onPress={()=>router.push(`/journal/${id}/edit`)}
+        >
+          <Text style={styles.actionText}>Edit</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.actionButton, styles.deleteButton]}
+          onPress={()=>handleDelete(id)}
+        >
+          <Text style={styles.actionText}>Delete</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -30,10 +56,12 @@ export default function JournalsScreen() {
           <Text style={styles.emptyText}>No journals yet.</Text>
         }
         renderItem={({ item }) => (
-          <JournalCard
-            onPress={() => router.push(`/journal/${item.id}`)}
-            journal={item}
-          />
+          <Swipeable renderRightActions={()=>renderRightAction(item.id)}>
+            <JournalCard
+              onPress={() => router.push(`/journal/${item.id}`)}
+              journal={item}
+            />
+          </Swipeable>
         )}
       />
     </View>
@@ -74,5 +102,26 @@ const styles = StyleSheet.create({
     color: "#3D3125",
     fontSize: 16,
     lineHeight: 24,
+  },
+  actions: {
+    flexDirection: "row",
+    marginBottom: 16,
+  },
+  actionButton: {
+    width: 80,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  editButton: {
+    backgroundColor:"#C8B08A",
+  },
+  deleteButton: {
+    backgroundColor: "#C95C4A",
+    borderTopRightRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  actionText: {
+    color: "white",
+    fontWeight: "700",
   },
 });

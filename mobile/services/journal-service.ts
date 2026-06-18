@@ -25,6 +25,8 @@ export const saveJournal = async (transcript: string): Promise<Journal> => {
 
     await AsyncStorage.setItem(JOURNAL_KEY, JSON.stringify(updatedJournals))
 
+    console.log(newJournal)
+
     return newJournal
 }
 

@@ -1,75 +1,30 @@
-/** @format */
-
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
 import { Journal } from "@/types/journal";
-import { deleteJournal } from "@/services/journal-service";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
-import Reanimated, {
-  SharedValue,
-  useAnimatedStyle,
-} from "react-native-reanimated";
 
 type journalCardProps = {
   journal: Journal;
   onPress: () => void;
-  onDelete: () => void;
 };
 
-function JournalCard({ journal, onPress, onDelete }: journalCardProps) {
+function JournalCard({ journal, onPress }: journalCardProps) {
   const date = new Date(journal.createdAt).toLocaleDateString();
   return (
-   
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-    >
-      <View style={styles.header}>
-        <Text style={styles.date}>{date}</Text>
-        <Text style={styles.chevron}>›</Text>
-      </View>
-
-      <Text style={styles.transcript} numberOfLines={3}>
-        {journal.transcript || "No transcript"}
-      </Text>
-    </Pressable>
-  );
-}
-
-
-function RightAction(prog: SharedValue<number>, drag: SharedValue<number>) {
-  const styleAnimation = useAnimatedStyle(() => {
-    console.log("showRightProgress:", prog.value);
-    console.log("appliedTranslation:", drag.value);
-
-    return {
-      transform: [{ translateX: drag.value + 50 }],
-    };
-  });
-
-  return (
-    <Reanimated.View style={styleAnimation}>
-      <Text style={styles.rightAction}>Text</Text>
-    </Reanimated.View>
-  );
-}
-
-export default function Example() {
-  return (
-    <GestureHandlerRootView>
-      <ReanimatedSwipeable
-        containerStyle={styles.swipeable}
-        friction={2}
-        enableTrackpadTwoFingerGesture
-        rightThreshold={40}
-        renderRightActions={RightAction}
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
       >
-        <Text>Swipe me!</Text>
-      </ReanimatedSwipeable>
-    </GestureHandlerRootView>
+        <View style={styles.header}>
+          <Text style={styles.date}>{date}</Text>
+          <Text style={styles.chevron}>›</Text>
+        </View>
+
+        <Text style={styles.transcript} numberOfLines={3}>
+          {journal.transcript || "No transcript"}
+        </Text>
+      </Pressable>
   );
 }
-
 
 const styles = StyleSheet.create({
   card: {

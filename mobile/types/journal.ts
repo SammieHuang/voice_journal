@@ -1,9 +1,13 @@
 export type Journal = {
   id: string;
+
   createdAt: string;
+  updatedAt?: string;
+  
   transcript?: string;
 
   audioUri?: string;
+  audioUrl?: string;
 
   mood?: {
     score: number; // 1-10
