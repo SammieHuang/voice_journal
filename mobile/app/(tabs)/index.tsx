@@ -1,13 +1,30 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
-import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable'
+import Swipeable, {
+  type SwipeableMethods,
+} from "react-native-gesture-handler/ReanimatedSwipeable";
 import { deleteJournal, getCloudJournals, getLocalJournals } from "@/services/journal-service";
 import { Journal } from "@/types/journal";
 import { JournalCard } from "@/components/JournalCard/JournalCard";
+import { JournalRow } from "@/components/JournalRow/JournalRow";
+
 
 export default function JournalsScreen() {
   const [journals, setJournals] = useState<Journal[]>([]);
+  const openedSwipeableRef = useRef<SwipeableMethods | null>(null)
+
+  const closeOpenedSwipeable = () => {
+    openedSwipeableRef.current?.close()
+    openedSwipeableRef.current = null
+  }
+
+  const handleSwipeableOpen = (ref: SwipeableMethods) => {
+    if (openedSwipeableRef.current && openedSwipeableRef.current !== ref) {
+      openedSwipeableRef.current.close()
+    }
+    openedSwipeableRef.current = ref
+  }
 
   const handleDelete = async (id: string) => {
     await deleteJournal(id)
@@ -18,7 +35,14 @@ export default function JournalsScreen() {
       <View style={styles.actions}>
         <Pressable
           style={[styles.actionButton, styles.editButton]}
-          onPress={()=>router.push(`/journal/${id}/edit`)}
+          onPress={() => {
+            closeOpenedSwipeable()
+            
+            router.push({
+              pathname: "/journal/[id]",
+              params:{id, mode:'edit'}
+            })
+          }}
         >
           <Text style={styles.actionText}>Edit</Text>
         </Pressable>
@@ -63,12 +87,13 @@ export default function JournalsScreen() {
           <Text style={styles.emptyText}>No journals yet.</Text>
         }
         renderItem={({ item }) => (
-          <Swipeable renderRightActions={()=>renderRightAction(item.id)}>
-            <JournalCard
-              onPress={() => router.push(`/journal/${item.id}`)}
-              journal={item}
-            />
-          </Swipeable>
+          <JournalRow
+            journal={item}
+            renderRightAction={renderRightAction}
+            onOpen={handleSwipeableOpen}
+            closeOpenedSwipeable={closeOpenedSwipeable}
+
+          />
         )}
       />
     </View>
