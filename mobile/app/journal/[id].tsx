@@ -6,19 +6,16 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Pressable,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Journal } from "@/types/journal";
-import { Ionicons } from "@expo/vector-icons";
 import {
   getJournalById,
   updateJournalTranscript,
   deleteJournal,
   saveJournal
 } from "@/services/journal-service";
-import { JournalEditor } from "@/components/JournalEditor/JournalEditor";
-import { JournalViewer } from "@/components/JournalViewer/JournalView";
+import { JournalHeader, JournalScreenContent } from "@/components";
 
 export default function JournalDetailScreen() {
   const { id, mode, transcript } = useLocalSearchParams<{
@@ -46,6 +43,7 @@ export default function JournalDetailScreen() {
       if (isNew) {
         const savedJournal = await saveJournal(draft)
         router.replace(`/journal/${savedJournal.id}`)
+        return
       }
 
       const updatedJournal = await updateJournalTranscript(String(id), draft)
@@ -108,28 +106,21 @@ export default function JournalDetailScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={22} color="#8A6F4D" />
-        <Text style={styles.backText}>Journals</Text>
-      </Pressable>
-      <Text style={styles.date}>
-        {new Date(journal.createdAt).toLocaleDateString()}
-      </Text>
+      <JournalHeader
+        onBack={() => router.replace("/")}
+        createdAt = {journal?.createdAt}
+      />
 
-      {isEditing ?
-        (<JournalEditor
-          draft={draft}
-          onChangeDraft={setDraft}
-          onCancel={handleCancel}
-          onSave={handleSave}
-          onDelete={handleDelete}
-          isSaving={isSaving}
-        />) :
-        (<JournalViewer
-            onLongPress={() => setIsEditing(true)}
-            transcript={draft}
-          />
-      )}
+      <JournalScreenContent
+        draft={draft}
+        isEditing={isEditing}
+        isSaving={isSaving}
+        onChangeDraft={setDraft}
+        onStartEditing={() => setIsEditing(true)}
+        onCancel={handleCancel}
+        onSave={handleSave}
+        onDelete={handleDelete}
+      />
     </ScrollView>
   );
 }
