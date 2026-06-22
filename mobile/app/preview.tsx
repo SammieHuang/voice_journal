@@ -2,7 +2,7 @@
 
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { getJournals, saveJournal } from "@/services/journal-service";
+import { saveJournal } from "@/services/journal-service";
 
 export default function PreviewScreen() {
   const { transcript } = useLocalSearchParams<{ transcript?: string }>();
