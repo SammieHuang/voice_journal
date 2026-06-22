@@ -1,5 +1,4 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
 import { Journal } from "@/types/journal";
 
 type journalCardProps = {
@@ -59,16 +58,6 @@ const styles = StyleSheet.create({
     color: "#3D3125",
     fontSize: 16,
     lineHeight: 24,
-  },
-  rightAction: { width: 50, height: 50, backgroundColor: "purple" },
-  separator: {
-    width: "100%",
-    borderTopWidth: 1,
-  },
-  swipeable: {
-    height: 50,
-    backgroundColor: "papayawhip",
-    alignItems: "center",
   },
 });
 

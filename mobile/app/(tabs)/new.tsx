@@ -25,14 +25,20 @@ export default function NewScreen() {
 
   useEffect(() => {
     if (recordStatus === 'preview' && transcript) {
-      router.push({
-        pathname: "/preview",
-        params:{transcript}
-      })
+        router.push({
+          pathname: "/journal/[id]",
+          params: {
+            id: "new",
+            transcript,
+            mode: "edit",
+          },
+        });
     }
   }, [recordStatus, transcript])
 
-  useFocusEffect(useCallback(()=>resetEntry(), []))
+  useFocusEffect(useCallback(() => resetEntry(), []))
+  
+   
 
 
   return (
