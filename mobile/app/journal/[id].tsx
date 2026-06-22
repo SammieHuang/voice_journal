@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  TextInput,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Journal } from "@/types/journal";
@@ -15,15 +14,23 @@ import { Ionicons } from "@expo/vector-icons";
 import {
   getJournalById,
   updateJournalTranscript,
-  deleteJournal
+  deleteJournal,
+  saveJournal
 } from "@/services/journal-service";
+import { JournalEditor } from "@/components/JournalEditor/JournalEditor";
+import { JournalViewer } from "@/components/JournalViewer/JournalView";
 
 export default function JournalDetailScreen() {
-  const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
+  const { id, mode, transcript } = useLocalSearchParams<{
+    id: string;
+    mode?: string;
+    transcript?: string
+  }>();
   const [journal, setJournal] = useState<Journal | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(mode === 'edit');
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [draft, setDraft] = useState('')
+  const isNew = id === 'new'
 
   const handleCancel = () => {
     setDraft(journal?.transcript ?? '')
@@ -35,6 +42,11 @@ export default function JournalDetailScreen() {
 
     try {
       setIsSaving(true)
+
+      if (isNew) {
+        const savedJournal = await saveJournal(draft)
+        router.replace(`/journal/${savedJournal.id}`)
+      }
 
       const updatedJournal = await updateJournalTranscript(String(id), draft)
 
@@ -52,12 +64,30 @@ export default function JournalDetailScreen() {
   const handleDelete = async () => {
     if (!id) return;
 
+    if (isNew) {
+      router.replace('/')
+      return
+    }
+
     await deleteJournal(String(id))
     router.replace("/")
   }
 
   useEffect(() => {
     if (!id) return;
+
+    if (isNew) {
+      const initialTranscript = transcript ?? ""
+      setJournal({
+        id: 'new',
+        createdAt: new Date().toISOString(),
+        transcript:initialTranscript
+      })
+      setDraft(initialTranscript)
+      setIsEditing(true)
+      return;
+    }
+
 
     const loadJournal = async () => {
       const savedJournal = await getJournalById(String(id));
@@ -66,7 +96,7 @@ export default function JournalDetailScreen() {
     };
 
     loadJournal();
-  }, [id]);
+  }, [id, transcript, isNew]);
 
   if (!journal) {
     return (
@@ -86,42 +116,19 @@ export default function JournalDetailScreen() {
         {new Date(journal.createdAt).toLocaleDateString()}
       </Text>
 
-      {isEditing ? (
-        <View>
-          <TextInput
-            style={styles.input}
-            defaultValue={draft}
-            onChangeText={setDraft}
-            textAlignVertical="top"
-            multiline
-            autoCorrect={false}
-          />
-          <View style={styles.editActions}>
-            <Pressable onPress={handleCancel} style={styles.cancelButton}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={handleSave}
-              style={[styles.saveButton, isSaving && styles.disabledButton]}
-              disabled={isSaving}
-            >
-              <Text style={styles.saveText}>
-                {isSaving ? "Saving..." : "Save"}
-              </Text>
-            </Pressable>
-            <Pressable onPress={handleDelete} style={styles.deleteButton}>
-              <Text style={styles.deleteText}>Delete</Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : (
-          <Pressable
+      {isEditing ?
+        (<JournalEditor
+          draft={draft}
+          onChangeDraft={setDraft}
+          onCancel={handleCancel}
+          onSave={handleSave}
+          onDelete={handleDelete}
+          isSaving={isSaving}
+        />) :
+        (<JournalViewer
             onLongPress={() => setIsEditing(true)}
-            style={styles.readArea}
-          >
-          <Text style={styles.transcript}>{journal.transcript}</Text>
-        </Pressable>
+            transcript={draft}
+          />
       )}
     </ScrollView>
   );
@@ -167,63 +174,5 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontFamily: "SpecialElite_400Regular",
   },
-  input: {
-    minHeight: 320,
-    color: "#3D3125",
-    fontSize: 20,
-    lineHeight: 32,
-    backgroundColor: "#FFF8E8",
-    borderRadius: 20,
-    padding: 20,
-  },
-  editActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 12,
-    marginTop: 20,
-  },
-  cancelButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  cancelText: {
-    color: "#8A6F4D",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  saveButton: {
-    backgroundColor: "#3D3125",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 999,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  saveText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  deleteButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 999,
-    backgroundColor: "#C95C4A",
-  },
-  deleteText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  readArea: {
-    flex: 1,
-    backgroundColor: "#FFF8E8",
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: "rgba(138,111,77,0.12)",
-  },
+
 });

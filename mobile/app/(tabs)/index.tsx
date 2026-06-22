@@ -1,12 +1,9 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState, useRef } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
-import Swipeable, {
-  type SwipeableMethods,
-} from "react-native-gesture-handler/ReanimatedSwipeable";
+import {type SwipeableMethods,} from "react-native-gesture-handler/ReanimatedSwipeable";
 import { deleteJournal, getCloudJournals, getLocalJournals } from "@/services/journal-service";
 import { Journal } from "@/types/journal";
-import { JournalCard } from "@/components/JournalCard/JournalCard";
 import { JournalRow } from "@/components/JournalRow/JournalRow";
 
 
