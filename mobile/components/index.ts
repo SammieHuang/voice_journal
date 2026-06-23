@@ -4,6 +4,7 @@ import { JournalRow } from "./JournalRow/JournalRow";
 import { JournalCard } from "./JournalCard/JournalCard";
 import JournalHeader from "./JournalHeader/JournalHeader";
 import JournalScreenContent from "./JournalScreenContent/JournalScreenContent";
+import { EmptyJournalsState } from "./EmptyJournalsState/EmptyJournalsState";
 
 
 export {
@@ -13,4 +14,5 @@ export {
   JournalCard,
   JournalHeader,
   JournalScreenContent,
+  EmptyJournalsState,
 };
