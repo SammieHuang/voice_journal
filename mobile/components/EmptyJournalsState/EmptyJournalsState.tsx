@@ -50,10 +50,9 @@ const styles = StyleSheet.create({
 
   noteWrapper: {
     width: 350,
-    height: 200,
+    height: 250,
     alignItems: "center",
     justifyContent: "center",
-    //marginBottom: 24,
   },
 
   noteCard: {
@@ -71,7 +70,7 @@ const styles = StyleSheet.create({
   noteTitle: {
     fontFamily: "SpecialElite_400Regular",
     color: "#3D3125",
-    fontSize: 22,
+    fontSize: 18,
     lineHeight: 30,
     textAlign: "center",
     marginBottom: 4,
@@ -80,9 +79,10 @@ const styles = StyleSheet.create({
   noteSubtitle: {
     fontFamily: "SpecialElite_400Regular",
     color: "#3D3125",
-    fontSize: 18,
+    fontSize: 15,
     lineHeight: 26,
     textAlign: "center",
+    marginBottom: 15
   },
 
   button: {

@@ -136,34 +136,5 @@ const styles = StyleSheet.create({
     paddingTop: 88,
     paddingBottom: 120,
   },
-  title: {
-    fontFamily: "SpecialElite_400Regular",
-    fontSize: 28,
-    color: "#3D3125",
-    textAlign: "center",
-    marginTop: 120,
-  },
-  date: {
-    color: "#8A6F4D",
-    fontSize: 16,
-    marginBottom: 24,
-  },
-  transcript: {
-    color: "#3D3125",
-    fontSize: 20,
-    lineHeight: 32,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 32,
-  },
-
-  backText: {
-    color: "#8A6F4D",
-    fontSize: 18,
-    marginLeft: 4,
-    fontFamily: "SpecialElite_400Regular",
-  },
 
 });

@@ -1,20 +1,50 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {supabase} from '@/services/supabase'
-import { Journal, DbJournal} from "@/types/journal";
+import { Journal, DbJournal, MoodLabel} from "@/types/journal";
 
 const JOURNAL_KEY = 'voice-journal-entries'
 
 export const mapDbJournalToJournal = (row: DbJournal): Journal => ({
   id: row.id,
+
+  userId: row.user_id ?? undefined,
+
   createdAt: row.created_at,
   updatedAt: row.updated_at ?? undefined,
+
   transcript: row.transcript ?? undefined,
+
   audioUrl: row.audio_url ?? undefined,
+
   mood:
-    row.mood_score !== null && row.mood_score !== undefined && row.mood_label
-      ? { score: row.mood_score, label: row.mood_label }
+    row.mood_score !== null || row.mood_label !== null
+      ? {
+          score: row.mood_score ?? undefined,
+          label: (row.mood_label as MoodLabel | null) ?? undefined,
+        }
       : undefined,
-  tags: row.tags ?? [],
+
+  tags: row.tags ?? undefined,
+});
+
+export const mapJournalToDbJournal = (
+  journal: Journal,
+): Partial<DbJournal> => ({
+  id: journal.id,
+
+  user_id: journal.userId ?? null,
+
+  created_at: journal.createdAt,
+  updated_at: journal.updatedAt ?? null,
+
+  transcript: journal.transcript ?? null,
+
+  audio_url: journal.audioUrl?? null,
+
+  mood_score: journal.mood?.score ?? null,
+  mood_label: journal.mood?.label ?? null,
+
+  tags: journal.tags ?? null,
 });
 
 export const getLocalJournals = async (): Promise<Journal[]> => {
@@ -27,18 +57,25 @@ export const cacheJournals = async (journals: Journal[]) => {
 }
 
 export const getCloudJournals = async (): Promise<Journal[]> => {
+    const {
+        data: { user },
+        error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError) throw userError
+    
+    if (!user) return []
+    
     const { data, error } = await supabase
         .from('journals')
-        .select("*")
+        .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
     
     if (error) throw error
     const journals = (data ?? []).map(mapDbJournalToJournal)
 
     await cacheJournals(journals)
-      console.log("error:", error);
-      console.log("data length:", data?.length);
-      console.log("data:", data);
 
     return journals
 }
@@ -57,27 +94,41 @@ export const getJournalById = async (id: string): Promise<Journal | null> => {
 };
 
 export const saveJournal = async (transcript: string): Promise<Journal> => {
-  const newJournal: DbJournal= {
-    id: Date.now().toString(),
-    created_at: new Date().toISOString(),
-    transcript,
-    tags: []
-  };
-    
+    const {
+        data: { user },
+        error: userError
+    } = await supabase.auth.getUser()
+
+    if (userError) throw userError;
+
+    if(!user) throw new Error('You must be signed in to save a journal')
+
+    const newJournal: Partial<DbJournal> = {
+        id: Date.now().toString(),
+        user_id: user?.id ?? null,
+        created_at: new Date().toISOString(),
+        updated_at: null,
+        transcript,
+        audio_url: null,
+        mood_score: null,
+        mood_label: null,
+        tags: []
+    }
+
     const { data, error } = await supabase
-        .from('journals')
+        .from("journals")
         .insert([newJournal])
         .select()
         .single()
     
     if (error) throw error
     
-    const savedJournal = mapDbJournalToJournal(data)
-
+    const savedJournals = mapDbJournalToJournal(data)
     const localJournals = await getLocalJournals()
-    await cacheJournals([savedJournal, ...localJournals])
+    await cacheJournals([savedJournals, ...localJournals])
 
-    return savedJournal
+    return savedJournals
+    
 };
 
 export const updateJournalTranscript = async (id: string, transcript: string): Promise<Journal> => {

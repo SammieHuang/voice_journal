@@ -3,6 +3,8 @@ import {
   useFonts,
   SpecialElite_400Regular,
 } from "@expo-google-fonts/special-elite";
+import { StyleSheet } from "react-native";
+import { colors } from "@/constants/theme";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
@@ -16,13 +18,9 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: "#55624F",
-          height: 75,
-          borderTopWidth: 0,
-        },
-        tabBarActiveTintColor: "#F8F1DD",
-        tabBarInactiveTintColor: "#D0C9AE",
+        tabBarStyle: { ...styles.tabBarStyle },
+        tabBarActiveTintColor: colors.tabBarActiveTintColor,
+        tabBarInactiveTintColor: colors.tabBarInactiveTintColor,
       }}
     >
       <Tabs.Screen
@@ -36,11 +34,7 @@ export default function TabLayout() {
               size={26}
             />
           ),
-          tabBarLabelStyle: {
-            fontFamily: "SpecialElite_400Regular",
-            fontSize: 14,
-            marginBottom: 8,
-          },
+          tabBarLabelStyle: { ...styles.tabBarLabelStyle },
         }}
       />
 
@@ -55,14 +49,9 @@ export default function TabLayout() {
               size={26}
             />
           ),
-          tabBarLabelStyle: {
-            fontFamily: "SpecialElite_400Regular",
-            fontSize: 14,
-            marginBottom: 8,
-          },
+          tabBarLabelStyle: { ...styles.tabBarLabelStyle },
         }}
       />
-
       <Tabs.Screen
         name="profile"
         options={{
@@ -70,13 +59,21 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <Ionicons name="person-outline" color={color} size={26} />
           ),
-          tabBarLabelStyle: {
-            fontFamily: "SpecialElite_400Regular",
-            fontSize: 14,
-            marginBottom: 8,
-          },
+          tabBarLabelStyle: { ...styles.tabBarLabelStyle },
         }}
       />
     </Tabs>
   );
 }
+const styles = StyleSheet.create({
+  tabBarStyle: {
+    backgroundColor: colors.tabBarBGColor,
+    height: 75,
+    borderTopWidth: 0,
+  },
+  tabBarLabelStyle: {
+    fontFamily: "SpecialElite_400Regular",
+    fontSize: 14,
+    marginBottom: 8,
+  },
+});

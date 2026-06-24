@@ -1,7 +1,7 @@
 export type Journal = {
   id: string;
-
   createdAt: string;
+  userId?: string;
   updatedAt?: string;
   
   transcript?: string;
@@ -10,8 +10,8 @@ export type Journal = {
   audioUrl?: string;
 
   mood?: {
-    score: number; // 1-10
-    label: MoodLabel;
+    score?: number; // 1-10
+    label?: MoodLabel;
   };
 
   tags?: string[];
@@ -19,14 +19,21 @@ export type Journal = {
 
 export type DbJournal = {
   id: string;
+
+  user_id: string | null;
+
   created_at: string;
-  updated_at?: string;
-  transcript?: string;
-  audio_url?: string;
-  mood_score?: number;
-  mood_label?: MoodLabel
-  tags?: string[]
-}
+  updated_at: string | null;
+
+  transcript: string | null;
+
+  audio_url: string | null;
+
+  mood_score: number | null;
+  mood_label: string | null;
+
+  tags: string[] | null;
+};
 
 export type MoodLabel =
   | "happy"
