@@ -1,4 +1,5 @@
-import { StyleSheet, View, Pressable, Text } from "react-native";
+import { StyleSheet,Pressable, Text } from "react-native";
+import { fonts } from "@/constants/theme";
 
 type JournalViewerProps = {
     onLongPress: () => void,
@@ -27,7 +28,8 @@ const styles = StyleSheet.create({
   },
   transcript: {
     color: "#3D3125",
-    fontSize: 20,
+    fontFamily: fonts.journal,
+    fontSize: 22,
     lineHeight: 32,
   },
 });

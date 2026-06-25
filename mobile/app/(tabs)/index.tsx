@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
 import {type SwipeableMethods,} from "react-native-gesture-handler/ReanimatedSwipeable";
 import { deleteJournal, getCloudJournals, getLocalJournals } from "@/services/journal-service";
 import { Journal } from "@/types/journal";
-import { JournalRow } from "@/components/JournalRow/JournalRow";
+import { JournalRow, EmptyJournalsState } from "@/components";
 
 
 export default function JournalsScreen() {
@@ -81,7 +81,7 @@ export default function JournalsScreen() {
         data={journals}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No journals yet.</Text>
+          <EmptyJournalsState onStartRecording={()=>router.push('/new')} />
         }
         renderItem={({ item }) => (
           <JournalRow

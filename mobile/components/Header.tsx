@@ -1,31 +1,36 @@
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
+import { colors, spacing, fonts} from "@/constants/theme";
 
 export default function Header() {
   return (
     <View>
       <Text
-        style={{
-          fontFamily: "SpecialElite_400Regular",
-          fontSize: 32,
-          lineHeight: 38,
-          color: "#3D3125",
-        }}
+        style={styles.header}
       >
         VOICE JOURNAL
       </Text>
-
       <Text
-        style={{
-          fontFamily: "SpecialElite_400Regular",
-          fontSize: 12,
-          lineHeight: 18,
-          color: "#8F8978",
-          marginTop: 6,
-          maxWidth: 300,
-        }}
+        style={styles.subheader}
       >
         Record your thoughts, become a better you.
       </Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    fontFamily: fonts.backpack,
+    fontSize: spacing.xl,
+    lineHeight: 38,
+    color: colors.header,
+  },
+  subheader: {
+    fontFamily: fonts.backpack,
+    fontSize: 12,
+    lineHeight: 18,
+    color: colors.subheader,
+    marginTop: 6,
+    maxWidth: 300,
+  },
+});
