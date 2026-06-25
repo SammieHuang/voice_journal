@@ -53,7 +53,14 @@ const getCurrentUser = async () => {
         return null
     } 
     return user
- };
+};
+ 
+const requireAuth = async () => {
+    const { data: { session }
+    } = await supabase.auth.getSession()
 
-export { signUp, logIn, logOut, getCurrentUser}
+    return session?.user ?? null
+}
+
+export { signUp, logIn, logOut, getCurrentUser, requireAuth}
 

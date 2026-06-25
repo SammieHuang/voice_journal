@@ -6,6 +6,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  Alert
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Journal } from "@/types/journal";
@@ -42,8 +43,15 @@ export default function JournalDetailScreen() {
 
       if (isNew) {
         const savedJournal = await saveJournal(draft)
-        router.replace(`/journal/${savedJournal.id}`)
+        if (!savedJournal) {
+          Alert.alert('You need to login to save ')
+          router.replace("/profile")
+          return 
+        }
+
+        router.replace(`/journal/${savedJournal.id}`);
         return
+       
       }
 
       const updatedJournal = await updateJournalTranscript(String(id), draft)

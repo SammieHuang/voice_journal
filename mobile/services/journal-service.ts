@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {supabase} from '@/services/supabase'
+import { supabase } from '@/services/supabase'
+import { router } from "expo-router";
 import { Journal, DbJournal, MoodLabel} from "@/types/journal";
 
 const JOURNAL_KEY = 'voice-journal-entries'
@@ -96,15 +97,20 @@ export const getJournalById = async (id: string): Promise<Journal | null> => {
     return mapDbJournalToJournal(data)
 };
 
-export const saveJournal = async (transcript: string): Promise<Journal> => {
+export const saveJournal = async (transcript: string): Promise<Journal | null> => {
     const {
-        data: { user },
-        error: userError
-    } = await supabase.auth.getUser()
+        data: { session },
+        error: sessionError
+    } = await supabase.auth.getSession()
 
-    if (userError) throw userError;
+    if (sessionError) throw sessionError;
 
-    if(!user) throw new Error('You must be signed in to save a journal')
+    const user = session?.user
+
+    if (!user) {
+        console.log('no user user')
+        return null
+    }
 
     const newJournal: Partial<DbJournal> = {
         id: Date.now().toString(),
@@ -125,6 +131,7 @@ export const saveJournal = async (transcript: string): Promise<Journal> => {
       .single();
     
     if (error) throw error
+
     const savedJournal = mapDbJournalToJournal(data);
     const localJournals = await getLocalJournals()
     await cacheJournals([savedJournal, ...localJournals])
