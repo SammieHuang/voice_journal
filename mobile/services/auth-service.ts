@@ -20,7 +20,8 @@ const signUp = async (
 };
 
 const logIn = async ({ email, password }: UserCredential) => {
-  try {
+    try {
+      console.log(email, password)
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -47,7 +48,10 @@ const getCurrentUser = async () => {
         data: { user },
         error
     } = await supabase.auth.getUser()
-    if(error) throw error   
+    if (error) {
+        console.log('No current user', error.message)
+        return null
+    } 
     return user
  };
 

@@ -136,5 +136,11 @@ const styles = StyleSheet.create({
     paddingTop: 88,
     paddingBottom: 120,
   },
-
+  title: {
+    fontFamily: "SpecialElite_400Regular",
+    fontSize: 28,
+    color: "#3D3125",
+    textAlign: "center",
+    marginTop: 120,
+  },
 });

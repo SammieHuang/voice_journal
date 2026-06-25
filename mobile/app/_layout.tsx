@@ -24,7 +24,6 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name='preview' options={{ headerShown: false }} />
         <Stack.Screen name='journal/[id]' options={{headerShown:false}} />
       </Stack>
     </GestureHandlerRootView>

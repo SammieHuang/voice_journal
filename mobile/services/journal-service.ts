@@ -62,7 +62,10 @@ export const getCloudJournals = async (): Promise<Journal[]> => {
         error: userError,
     } = await supabase.auth.getUser()
 
-    if (userError) throw userError
+    if (userError) {
+          console.log("No current user for journals", userError.message);
+          return [];
+    }
     
     if (!user) return []
     
@@ -105,7 +108,7 @@ export const saveJournal = async (transcript: string): Promise<Journal> => {
 
     const newJournal: Partial<DbJournal> = {
         id: Date.now().toString(),
-        user_id: user?.id ?? null,
+        user_id: user.id,
         created_at: new Date().toISOString(),
         updated_at: null,
         transcript,
@@ -116,19 +119,17 @@ export const saveJournal = async (transcript: string): Promise<Journal> => {
     }
 
     const { data, error } = await supabase
-        .from("journals")
-        .insert([newJournal])
-        .select()
-        .single()
+      .from("journals")
+      .insert([newJournal])
+      .select()
+      .single();
     
     if (error) throw error
-    
-    const savedJournals = mapDbJournalToJournal(data)
+    const savedJournal = mapDbJournalToJournal(data);
     const localJournals = await getLocalJournals()
-    await cacheJournals([savedJournals, ...localJournals])
+    await cacheJournals([savedJournal, ...localJournals])
 
-    return savedJournals
-    
+    return savedJournal
 };
 
 export const updateJournalTranscript = async (id: string, transcript: string): Promise<Journal> => {
