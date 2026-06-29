@@ -1,4 +1,6 @@
-import { StyleSheet,Pressable, Text } from "react-native";
+import { StyleSheet, Pressable, Text } from "react-native";
+import { Typography } from "../ui";
+import { theme } from "@/design-system";
 import { fonts } from "@/constants/theme";
 
 type JournalViewerProps = {
@@ -8,28 +10,17 @@ type JournalViewerProps = {
 
 export function JournalViewer({onLongPress, transcript}: JournalViewerProps) {
     return (
-        <Pressable
-          onLongPress={() => onLongPress()}
-          style={styles.readArea}
-        >
-        <Text
-          style={styles.transcript}
-        >
-            {transcript || "No transcript"}
-        </Text>
-        </Pressable>
+      <Pressable onLongPress={() => onLongPress()} style={styles.readArea}>
+        <Typography variant="journal">
+          {transcript || "No transcript"}
+        </Typography>
+      </Pressable>
     );
 }
 
 const styles = StyleSheet.create({
   readArea: {
     flex: 1,
-    padding: 24,
-  },
-  transcript: {
-    color: "#3D3125",
-    fontFamily: fonts.journal,
-    fontSize: 22,
-    lineHeight: 32,
+    padding: theme.spacing.xxl,
   },
 });

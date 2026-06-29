@@ -1,6 +1,8 @@
 /** @format */
 
-import { StyleSheet, Text, TextInput, Pressable, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
+import { Button } from "@/components/ui";
+import { theme } from "@/design-system";
 
 type JournalEditorProps = {
   draft: string;
@@ -29,26 +31,17 @@ export function JournalEditor({
         multiline
         autoCorrect={false}
       />
-
       <View style={styles.editActions}>
-        <Pressable onPress={onDelete} style={styles.deleteButton}>
-          <Text style={styles.deleteText}>Delete</Text>
-        </Pressable>
-
+        <Button onPress={onDelete} variant="danger">
+          Delete
+        </Button>
         <View style={styles.rightActions}>
-          <Pressable onPress={onCancel} style={styles.cancelButton}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={onSave}
-            style={[styles.saveButton, isSaving && styles.disabledButton]}
-            disabled={isSaving}
-          >
-            <Text style={styles.saveText}>
-              {isSaving ? "Saving..." : "Save"}
-            </Text>
-          </Pressable>
+          <Button onPress={onCancel} variant="ghost">
+            Cancel
+          </Button>
+          <Button onPress={onSave} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save"}
+          </Button>
         </View>
       </View>
     </View>
@@ -58,56 +51,22 @@ export function JournalEditor({
 const styles = StyleSheet.create({
   input: {
     minHeight: 320,
-    color: "#3D3125",
+    color: theme.colors.textWarm,
     fontSize: 20,
     lineHeight: 32,
-    backgroundColor: "#FFF8E8",
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: theme.colors.surfaceWarm,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.xl,
   },
   editActions: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
-    marginTop: 20,
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.xl,
   },
   rightActions: {
     flexDirection: "row",
-    gap: 12,
-  },
-  cancelButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  cancelText: {
-    color: "#8A6F4D",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  saveButton: {
-    backgroundColor: "#3D3125",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 999,
-  },
-  saveText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  deleteButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 999,
-    backgroundColor: "#C95C4A",
-  },
-  deleteText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  disabledButton: {
-    opacity: 0.6,
+    gap: theme.spacing.md,
   },
 });
