@@ -1,63 +1,87 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native'
-import { useState, useEffect } from 'react'
-import { router } from 'expo-router';
-import type { User } from "@supabase/supabase-js";
-import {logOut, getCurrentUser } from '@/services/auth-service'
+/** @format */
+
+import { useEffect, useState } from "react";
+import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
+import { router } from "expo-router";
+
+import { supabase } from "@/services/supabase";
 
 export default function ProfileScreen() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  const handleLogOut = async () => {
-    try {
-      await logOut()
-      setCurrentUser(null)
-    } catch (err) {
-      console.log('Failed to log out', err)
-      throw err
-    }
-  }
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadUsers() {
-      try {
-          const user = await getCurrentUser();
-        
-        setCurrentUser(user);
+    const loadUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-        console.log(user);
-      } catch (err) {
-        throw err;
-      }
+      setEmail(user?.email ?? null);
+    };
+
+    loadUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setEmail(session?.user?.email ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      Alert.alert("Log Out Failed", error.message);
+      return;
     }
 
-    loadUsers();
-  }, []);
+    setEmail(null);
+  };
+
+  const isLoggedIn = Boolean(email);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Profile</Text>
 
-      {currentUser ? (
-        <View>
-          <Text>Logged in as:</Text>
-          <Text>{currentUser.email}</Text>
-          <Pressable onPress={handleLogOut}>
-            <Text >Log Out</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <View>
-          <Text>You are not logged in.</Text>
+      <View style={styles.card}>
+        {isLoggedIn ? (
+          <>
+            <Text style={styles.cardTitle}>Account</Text>
+            <Text style={styles.subtitle}>Signed in as</Text>
+            <Text style={styles.email}>{email}</Text>
 
-          <Pressable onPress={() => router.push("/auth/login")}>
-            <Text>Log In</Text>
-          </Pressable>
+            <Pressable style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutButtonText}>Log Out</Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Text style={styles.cardTitle}>You’re not logged in</Text>
+            <Text style={styles.subtitle}>
+              Log in or create an account to sync your voice journals.
+            </Text>
 
-          <Pressable onPress={() => router.push("/auth/signup")}>
-            <Text>Sign Up</Text>
-          </Pressable>
-        </View>
-      )}
+            <Pressable
+              style={styles.primaryButton}
+              onPress={() => router.push("/auth/login")}
+            >
+              <Text style={styles.primaryButtonText}>Log In</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.secondaryButton}
+              onPress={() => router.push("/auth/signup")}
+            >
+              <Text style={styles.secondaryButtonText}>Create Account</Text>
+            </Pressable>
+          </>
+        )}
+      </View>
     </View>
   );
 }
@@ -65,11 +89,88 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
+    backgroundColor: "#F6F1EB",
+    paddingHorizontal: 24,
+    paddingTop: 72,
   },
+
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "700",
+    color: "#3A2F27",
     marginBottom: 24,
+  },
+
+  card: {
+    backgroundColor: "#FFFDF8",
+    borderRadius: 28,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
+  },
+
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#3A2F27",
+    marginBottom: 8,
+  },
+
+  subtitle: {
+    fontSize: 16,
+    color: "#7A6A5D",
+    lineHeight: 22,
+    marginBottom: 8,
+  },
+
+  email: {
+    fontSize: 16,
+    color: "#3A2F27",
+    fontWeight: "600",
+    marginBottom: 24,
+  },
+
+  primaryButton: {
+    backgroundColor: "#A66A43",
+    borderRadius: 999,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 12,
+  },
+
+  primaryButtonText: {
+    color: "#FFFDF8",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  secondaryButton: {
+    backgroundColor: "#F3E8DA",
+    borderRadius: 999,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+
+  secondaryButtonText: {
+    color: "#A66A43",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  logoutButton: {
+    backgroundColor: "#B75C4A",
+    borderRadius: 999,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+
+  logoutButtonText: {
+    color: "#FFFDF8",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });

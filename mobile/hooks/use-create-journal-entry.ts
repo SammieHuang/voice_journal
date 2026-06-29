@@ -7,8 +7,10 @@ import {
   setAudioModeAsync,
 } from "expo-audio";
 import { useState } from "react";
+import { router } from "expo-router";
 import { RecordStatusTypes } from "@/types/types";
 import { transcribeAudio } from "@/services/transcribe-service";
+import { requireAuth} from "@/services/auth-service";
 
 export default function useCreateJournalEntry() {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -19,6 +21,14 @@ export default function useCreateJournalEntry() {
 
   const startRecording = async () => {
     setAudioUri(null)
+
+    const sessionUser = await await requireAuth()
+    if (!sessionUser) {
+      alert('Please log in to save your journal')
+      router.push("/profile")
+      return
+    }
+
     const permission = await AudioModule.requestRecordingPermissionsAsync();
 
     if (!permission.granted) {
