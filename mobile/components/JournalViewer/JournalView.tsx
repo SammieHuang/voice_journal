@@ -1,7 +1,6 @@
 import { StyleSheet, Pressable, Text } from "react-native";
 import { Typography } from "../ui";
 import { theme } from "@/design-system";
-import { fonts } from "@/constants/theme";
 
 type JournalViewerProps = {
     onLongPress: () => void,

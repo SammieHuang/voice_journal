@@ -1,10 +1,12 @@
 /** @format */
 
 import { useEffect, useState } from "react";
-import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
+import { View, StyleSheet, Alert } from "react-native";
 import { router } from "expo-router";
 
 import { supabase } from "@/services/supabase";
+import { Button, Typography, Surface } from "@/components/ui";
+import { theme } from "@/design-system";
 
 export default function ProfileScreen() {
   const [email, setEmail] = useState<string | null>(null);
@@ -46,42 +48,51 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Profile</Text>
+      <Typography variant="screenTitle" style={styles.title}>
+        Profile
+      </Typography>
 
-      <View style={styles.card}>
+      <Surface style={styles.card}>
         {isLoggedIn ? (
           <>
-            <Text style={styles.cardTitle}>Account</Text>
-            <Text style={styles.subtitle}>Signed in as</Text>
-            <Text style={styles.email}>{email}</Text>
+            <Typography variant="cardTitle" style={styles.cardTitle}>
+              Account
+            </Typography>
 
-            <Pressable style={styles.logoutButton} onPress={handleLogout}>
-              <Text style={styles.logoutButtonText}>Log Out</Text>
-            </Pressable>
+            <Typography variant="subtitle" style={styles.subtitle}>
+              Signed In as
+            </Typography>
+
+            <Typography variant="body" style={styles.email}>
+              {email}
+            </Typography>
+
+            <Button variant="danger" onPress={handleLogout}>
+              Log Out
+            </Button>
           </>
         ) : (
           <>
-            <Text style={styles.cardTitle}>You’re not logged in</Text>
-            <Text style={styles.subtitle}>
+            <Typography variant="cardTitle" style={styles.cardTitle}>
+              You are not logged in.
+            </Typography>
+
+            <Typography variant="subtitle" style={styles.subtitle}>
               Log in or create an account to sync your voice journals.
-            </Text>
+            </Typography>
 
-            <Pressable
-              style={styles.primaryButton}
-              onPress={() => router.push("/auth/login")}
-            >
-              <Text style={styles.primaryButtonText}>Log In</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.secondaryButton}
-              onPress={() => router.push("/auth/signup")}
-            >
-              <Text style={styles.secondaryButtonText}>Create Account</Text>
-            </Pressable>
+            <View style={styles.buttonGroup}>
+              <Button onPress={() => router.push("/auth/login")}>Log In</Button>
+              <Button
+                variant="secondary"
+                onPress={() => router.push("/auth/signup")}
+              >
+                Create Account
+              </Button>
+            </View>
           </>
         )}
-      </View>
+      </Surface>
     </View>
   );
 }
@@ -89,88 +100,37 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F6F1EB",
-    paddingHorizontal: 24,
-    paddingTop: 72,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.screenHorizontal,
+    paddingTop: theme.spacing.screenTop,
   },
 
   title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#3A2F27",
-    marginBottom: 24,
+    marginBottom: theme.spacing.xxl,
   },
 
   card: {
-    backgroundColor: "#FFFDF8",
-    borderRadius: 28,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOpacity: 0.07,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xxl,
+    padding: theme.spacing.xxl,
+    ...theme.shadows.card,
   },
 
   cardTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#3A2F27",
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
 
   subtitle: {
-    fontSize: 16,
-    color: "#7A6A5D",
-    lineHeight: 22,
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
 
   email: {
-    fontSize: 16,
-    color: "#3A2F27",
     fontWeight: "600",
-    marginBottom: 24,
+    marginBottom: theme.spacing.xxl,
   },
 
-  primaryButton: {
-    backgroundColor: "#A66A43",
-    borderRadius: 999,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: 8,
-    marginBottom: 12,
-  },
-
-  primaryButtonText: {
-    color: "#FFFDF8",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  secondaryButton: {
-    backgroundColor: "#F3E8DA",
-    borderRadius: 999,
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-
-  secondaryButtonText: {
-    color: "#A66A43",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  logoutButton: {
-    backgroundColor: "#B75C4A",
-    borderRadius: 999,
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-
-  logoutButtonText: {
-    color: "#FFFDF8",
-    fontSize: 16,
-    fontWeight: "700",
+  buttonGroup: {
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
 });

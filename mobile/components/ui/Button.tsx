@@ -53,11 +53,11 @@ const styles = StyleSheet.create({
   },
 
   secondary: {
-    backgroundColor: theme.colors.surfaceWarm,
+    backgroundColor: theme.colors.secondary,
   },
 
   secondaryText: {
-    color: theme.colors.accent,
+    color: theme.colors.white,
   },
 
   danger: {

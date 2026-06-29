@@ -18,6 +18,7 @@ export const colors = {
   // Brand / Actions
   brand: "#55624F",
   accent: "#A66A43",
+  secondary: "#C9A97A",
 
   // Semantic Status
   danger: "#C95C4A",
