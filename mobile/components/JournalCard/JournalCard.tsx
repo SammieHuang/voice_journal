@@ -1,5 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Journal } from "@/types/journal";
+import { Surface, Typography } from "@/components/ui";
+import { theme } from "@/design-system";
+
 
 type journalCardProps = {
   journal: Journal;
@@ -9,31 +12,29 @@ type journalCardProps = {
 function JournalCard({ journal, onPress }: journalCardProps) {
   const date = new Date(journal.createdAt).toLocaleDateString();
   return (
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-      >
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => pressed && styles.pressed}
+    >
+      <Surface style={styles.card}>
         <View style={styles.header}>
-          <Text style={styles.date}>{date}</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Typography variant="caption">{date}</Typography>
+          <Typography variant="caption" style={styles.chevron}>
+            ›
+          </Typography>
         </View>
 
-        <Text style={styles.transcript} numberOfLines={3}>
+        <Typography variant="body" numberOfLines={3}>
           {journal.transcript || "No transcript"}
-        </Text>
-      </Pressable>
+        </Typography>
+      </Surface>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#FFF8E8",
-    borderRadius: 24,
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "rgba(138,111,77,0.12)",
+    marginBottom: theme.spacing.lg,
   },
   pressed: {
     opacity: 0.75,
@@ -43,22 +44,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
-  },
-  date: {
-    color: "#8A6F4D",
-    fontSize: 14,
+    marginBottom: theme.spacing.sm + 2,
   },
   chevron: {
-    color: "#8A6F4D",
     fontSize: 28,
     lineHeight: 28,
   },
-  transcript: {
-    color: "#3D3125",
-    fontSize: 16,
-    lineHeight: 24,
-  },
 });
 
-export {JournalCard}
+export { JournalCard };
