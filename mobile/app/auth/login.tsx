@@ -1,40 +1,18 @@
 /** @format */
 
-import { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  Alert,
-} from "react-native";
+import { Alert } from "react-native";
 import { router } from "expo-router";
-
+import { AuthScreen } from "@/components/Auth/AuthScreen";
 import { logIn } from "@/services/auth-service";
 
 export default function LogInScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert("Missing Information", "Please enter email and password.");
-      return;
-    }
-
+  const handleLogin = async (email: string, password: string) => {
     try {
-      setIsSubmitting(true);
+      const res = await logIn({ email, password });
 
-      const res = await logIn({
-        email,
-        password,
-      });
-        
-        console.log('Login Res: ', res)
+      console.log("Login Res: ", res);
 
-      Alert.alert("Success", "Account log in successfully.");
+      Alert.alert("Success", "Account logged in successfully.");
 
       router.replace("/(tabs)/profile");
     } catch (err) {
@@ -42,81 +20,21 @@ export default function LogInScreen() {
         "Login Failed",
         err instanceof Error ? err.message : "Unknown error",
       );
-    } finally {
-      setIsSubmitting(false);
+
+      throw err;
     }
   };
-    
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Log In</Text>
-
-      <TextInput
-        placeholder="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        style={styles.input}
-      />
-
-      <Pressable
-        style={styles.button}
-        onPress={handleLogin}
-        disabled={isSubmitting}
-      >
-        <Text style={styles.buttonText}>
-          {isSubmitting ? "Logging..." : "Log In"}
-        </Text>
-      </Pressable>
-    </View>
+    <AuthScreen
+      title="Welcome Back"
+      subtitle="Continue your voice journal journey."
+      buttonText="Log In"
+      submittingText="Logging in..."
+      footerText="Don't have an account?"
+      footerLinkText="Sign Up"
+      onFooterPress={() => router.push("/auth/signup")}
+      onSubmit={handleLogin}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    justifyContent: "center",
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 32,
-  },
-
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-
-  button: {
-    backgroundColor: "#000",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    marginTop: 8,
-  },
-
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-
-  link: {
-    textAlign: "center",
-    marginTop: 24,
-  },
-});

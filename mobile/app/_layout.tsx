@@ -24,7 +24,25 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name='journal/[id]' options={{headerShown:false}} />
+        <Stack.Screen name="journal/[id]" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="auth/login"
+          options={{
+            title: "Log In",
+            headerBackTitle: "",
+            headerBackVisible: true,
+            headerBackButtonDisplayMode: "minimal",
+          }}
+        />
+        <Stack.Screen
+          name="auth/signup"
+          options={{
+            title: "Sign Up",
+            headerBackTitle: "",
+            headerBackVisible: true,
+            headerBackButtonDisplayMode: "minimal",
+          }}
+        />
       </Stack>
     </GestureHandlerRootView>
   );
