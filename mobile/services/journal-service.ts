@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from '@/services/supabase'
-import { router } from "expo-router";
 import { Journal, DbJournal, MoodLabel} from "@/types/journal";
 
 const JOURNAL_KEY = 'voice-journal-entries'
@@ -173,4 +172,35 @@ export const deleteJournal = async (id: string): Promise<void> => {
     const localJournals = await getLocalJournals()
 
     await cacheJournals(localJournals.filter(journal=>journal.id !== id))
+}
+
+export const getTodayJournal = async (): Promise<Journal | null> => {
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+
+    const tmrStart = new Date(todayStart)
+    tmrStart.setDate(todayStart.getDate() + 1)
+
+    const { data, error } = await supabase
+      .from("journals")
+      .select("*")
+      .gte("created_at", todayStart.toISOString())
+      .lt("created_at", tmrStart.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+        .maybeSingle()
+    
+    if (error) throw error
+    return data ? mapDbJournalToJournal(data) : null
+}
+
+export const saveOrAppendJournal = async (transcript: string) => {
+        const todayJournal = await getTodayJournal()
+        if (!todayJournal) return saveJournal(transcript)
+        
+        const id = todayJournal.id
+        const journalScript = (todayJournal.transcript ?? "") + "\n\n" + transcript;
+
+        return await updateJournalTranscript(id, journalScript as string)
+
 }
