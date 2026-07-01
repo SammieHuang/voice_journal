@@ -5,6 +5,7 @@ import {type SwipeableMethods,} from "react-native-gesture-handler/ReanimatedSwi
 import { deleteJournal, getCloudJournals, getLocalJournals } from "@/services/journal-service";
 import { Journal } from "@/types/journal";
 import { JournalRow, EmptyJournalsState } from "@/components";
+import { requireAuth } from "@/services/auth-service";
 
 
 export default function JournalsScreen() {
@@ -56,20 +57,31 @@ export default function JournalsScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      let isActive = true;
+
       const loadJournals = async () => {
         try {
+          if(!isActive) return 
+          const user = await requireAuth()
+          
+          if (!user) {
+            setJournals([])
+            return
+          }
+
           const localJournals = await getLocalJournals()
-          setJournals(localJournals)
-
+          if (isActive) setJournals(localJournals)
+          
           const cloudJournals = await getCloudJournals()
-          setJournals(cloudJournals)
+          if(isActive) setJournals(cloudJournals)
         } catch (err) {
-          console.log(`Failed to load journals`, err)
+          console.log('failed to load journals, ', err)
         }
+        if(isActive) setJournals([])
+      }
+      loadJournals()
 
-      };
-
-      loadJournals();
+      return ()=>{isActive = false}
     }, []),
   );
 

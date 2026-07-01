@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "api": "pnpm --filter api dev",
-    "mobile": "pnpm --filter mobile start",
-    "dev": "concurrently \"pnpm api\" \"pnpm mobile\""
+    "mobile": "pnpm --filter mobile exec expo start --ios",
+    "dev": "open -a Simulator && sleep 3 && concurrently -k -n API,MOBILE \"pnpm api\" \"pnpm mobile\""
   },
   "keywords": [],
   "author": "",

@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet } from "react-native";
-import { router, useFocusEffect } from "expo-router";
-import { useEffect, useCallback } from "react";
+import { router,} from "expo-router";
+import { useEffect,useRef} from "react";
 import useCreateJournalEntry from "@/hooks/use-create-journal-entry";
 import RecordButton from "@/components/RecordButton/RecordButton";
 import { RecordStatusTypes } from "@/types/types";
+import { getTodayJournal, saveOrAppendJournal } from "@/services/journal-service";
+import { Journal } from "@/types/journal";
 
 export default function NewScreen() {
   const {
@@ -12,7 +14,6 @@ export default function NewScreen() {
     startRecording,
     stopRecording,
     startTranscribe,
-    resetEntry
   } = useCreateJournalEntry();
 
   const getPressFunction = (recordStatus: RecordStatusTypes) => {
@@ -23,23 +24,43 @@ export default function NewScreen() {
     return async ()=>{}
   }
 
+  const hasSavedRef = useRef(false)
+
+  // useEffect(() => {
+  //   if (recordStatus === 'preview' && transcript) {
+  //     saveOrAppendJournal(transcript)
+  //       router.push({
+  //         pathname: "/journal/[id]",
+  //         params: {
+  //           id: "new",
+  //           transcript,
+  //           mode: "edit",
+  //         },
+  //       });
+  //   }
+  // }, [recordStatus, transcript])
+
   useEffect(() => {
-    if (recordStatus === 'preview' && transcript) {
-        router.push({
-          pathname: "/journal/[id]",
-          params: {
-            id: "new",
-            transcript,
-            mode: "edit",
-          },
-        });
+    const saveAndGoToJournal = async () => {
+      if (recordStatus !== 'preview' || !transcript) return
+      if (hasSavedRef.current) return;
+
+      hasSavedRef.current = true;
+
+      const journal = await saveOrAppendJournal(transcript)
+
+      router.push({
+        pathname: "/journal/[id]",
+        params: {
+          id: (journal as Journal).id
+        }
+      })
     }
+
+    saveAndGoToJournal()
   }, [recordStatus, transcript])
 
-  useFocusEffect(useCallback(() => resetEntry(), []))
-  
-   
-
+ 
 
   return (
     <View

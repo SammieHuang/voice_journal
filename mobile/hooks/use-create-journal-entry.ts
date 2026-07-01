@@ -54,23 +54,23 @@ export default function useCreateJournalEntry() {
     setAudioUri(recorder.uri);
   };
 
-const startTranscribe = async () => {
-    if (!audioUri || isTranscribing) return;
-    try {
-      setIsTranscribing(true);
-      setRecordStatus("transcribing");
-      const text = await transcribeAudio(audioUri);
-      
-      setTranscript(text);  
-      setRecordStatus("preview");
-      
-    } catch (err) {
-      console.log(err);
-      setRecordStatus("readyToTranscribe");
-    } finally {
-      setIsTranscribing(false);
-    }
-}
+  const startTranscribe = async () => {
+      if (!audioUri || isTranscribing) return;
+      try {
+        setIsTranscribing(true);
+        setRecordStatus("transcribing");
+        const text = await transcribeAudio(audioUri);
+        
+        setTranscript(text);  
+        setRecordStatus("preview");
+        
+      } catch (err) {
+        console.log(err);
+        setRecordStatus("readyToTranscribe");
+      } finally {
+        setIsTranscribing(false);
+      }
+  }
   const resetEntry = () => {
     setAudioUri(null)
     setTranscript(null)
