@@ -28,6 +28,7 @@ export default function JournalDetailScreen() {
   const [isEditing, setIsEditing] = useState<boolean>(mode === 'edit');
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const [draft, setDraft] = useState('')
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const isNew = id === 'new'
 
   const handleCancel = () => {
@@ -91,6 +92,7 @@ export default function JournalDetailScreen() {
       })
       setDraft(initialTranscript)
       setIsEditing(true)
+      setIsLoading(false)
       return;
     }
 
@@ -99,12 +101,22 @@ export default function JournalDetailScreen() {
       const savedJournal = await getJournalById(String(id));
       setJournal(savedJournal);
       setDraft(savedJournal?.transcript ?? '')
+      setIsLoading(false)
+
     };
 
     loadJournal();
   }, [id, transcript, isNew]);
 
-  if (!journal) {
+  if (isLoading) {
+        return (
+          <View style={styles.screen}>
+            <Text style={styles.title}>Loading Journal</Text>
+          </View>
+        );
+  }
+
+  if (!isLoading && !journal) {
     return (
       <View style={styles.screen}>
         <Text style={styles.title}>Journal not found</Text>
@@ -115,8 +127,8 @@ export default function JournalDetailScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <JournalHeader
-        onBack={() => router.replace("/")}
-        createdAt = {journal?.createdAt}
+        onBack={() => router.back()}
+        createdAt = {journal?.createdAt as string}
       />
 
       <JournalScreenContent
