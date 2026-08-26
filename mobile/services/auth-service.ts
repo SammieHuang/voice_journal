@@ -1,3 +1,4 @@
+import { clearLocalJournals } from "./journal-service";
 import { supabase } from "./supabase";
 import { UserCredential } from "@/types/AppUser";
 
@@ -33,16 +34,6 @@ const logIn = async ({ email, password }: UserCredential) => {
   }
 };
 
-const logOut = async () => {
-    try {
-        const { error } = await supabase.auth.signOut()
-        if (error) throw error;
-    } catch (err) {
-        console.log("Failed to log out", err)
-        throw err
-    }
-};
-
 const getCurrentUser = async () => {
     const {
         data: { user },
@@ -60,6 +51,17 @@ const requireAuth = async () => {
     } = await supabase.auth.getSession()
 
     return session?.user ?? null
+}
+
+const logOut = async () => {
+    try {
+        const { error } = await supabase.auth.signOut()
+        if (error) throw error
+        await clearLocalJournals()
+    } catch (err) {
+        console.log("Failed to log out", err)
+        throw err
+    }
 }
 
 export { signUp, logIn, logOut, getCurrentUser, requireAuth}

@@ -1,11 +1,12 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
 import {type SwipeableMethods,} from "react-native-gesture-handler/ReanimatedSwipeable";
 import { deleteJournal, getCloudJournals, getLocalJournals } from "@/services/journal-service";
 import { Journal } from "@/types/journal";
 import { JournalRow, EmptyJournalsState } from "@/components";
 import { requireAuth } from "@/services/auth-service";
+import { supabase } from "@/services/supabase";
 
 
 export default function JournalsScreen() {
@@ -26,7 +27,7 @@ export default function JournalsScreen() {
 
   const handleDelete = async (id: string) => {
     await deleteJournal(id)
-    setJournals(journals=>journals.filter(journal=>journal.id !== id))
+    setJournals(journals => journals.filter(journal => journal.id !== id))
   }
   const renderRightAction = (id: string) => {
     return (
@@ -38,7 +39,7 @@ export default function JournalsScreen() {
             
             router.push({
               pathname: "/journal/[id]",
-              params:{id, mode:'edit'}
+              params: { id, mode: 'edit' }
             })
           }}
         >
@@ -47,13 +48,23 @@ export default function JournalsScreen() {
 
         <Pressable
           style={[styles.actionButton, styles.deleteButton]}
-          onPress={()=>handleDelete(id)}
+          onPress={() => handleDelete(id)}
         >
           <Text style={styles.actionText}>Delete</Text>
         </Pressable>
       </View>
     );
   }
+
+  useEffect(() => {
+    const {
+      data: {subscription},
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if(!session?.user){setJournals([])}
+    })
+
+    return ()=>subscription.unsubscribe()
+  }, [])
 
   useFocusEffect(
     useCallback(() => {
@@ -77,7 +88,6 @@ export default function JournalsScreen() {
         } catch (err) {
           console.log('failed to load journals, ', err)
         }
-        if(isActive) setJournals([])
       }
       loadJournals()
 

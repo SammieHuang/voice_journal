@@ -7,6 +7,7 @@ import { router } from "expo-router";
 import { supabase } from "@/services/supabase";
 import { Button, Typography, Surface } from "@/components/ui";
 import { theme } from "@/design-system";
+import { logOut } from "@/services/auth-service";
 
 export default function ProfileScreen() {
   const [email, setEmail] = useState<string | null>(null);
@@ -34,14 +35,11 @@ export default function ProfileScreen() {
   }, []);
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      Alert.alert("Log Out Failed", error.message);
-      return;
+    try {
+      await logOut()
+    } catch (err) {
+      Alert.alert("Log Out Failed", (err as Error).message)
     }
-
-    setEmail(null);
   };
 
   const isLoggedIn = Boolean(email);
