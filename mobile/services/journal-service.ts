@@ -204,3 +204,7 @@ export const saveOrAppendJournal = async (transcript: string) => {
         return await updateJournalTranscript(id, journalScript as string)
 
 }
+
+export const clearLocalJournals = async () => {
+    await AsyncStorage.removeItem(JOURNAL_KEY)
+}
