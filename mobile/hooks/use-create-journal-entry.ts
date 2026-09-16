@@ -6,7 +6,7 @@ import {
   RecordingPresets,
   setAudioModeAsync,
 } from "expo-audio";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { router } from "expo-router";
 import { RecordStatusTypes } from "@/types/types";
 import { transcribeAudio } from "@/services/transcribe-service";
@@ -19,10 +19,14 @@ export default function useCreateJournalEntry() {
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const [transcript, setTranscript] = useState<string | null>(null);
 
+  useEffect(() => {
+    AudioModule.requestRecordingPermissionsAsync()
+  }, )
+
   const startRecording = async () => {
     setAudioUri(null)
 
-    const sessionUser = await await requireAuth()
+    const sessionUser = await requireAuth()
     if (!sessionUser) {
       alert('Please log in to save your journal')
       router.push("/profile")
@@ -36,12 +40,13 @@ export default function useCreateJournalEntry() {
       console.log("Microphone permission denied");
       return;
     }
+
     await setAudioModeAsync({
       allowsRecording: true,
       playsInSilentMode: true,
-    });
-    await recorder.prepareToRecordAsync();
-
+    })
+    await recorder.prepareToRecordAsync()
+    
     recorder.record();
     setRecordStatus("recording");
   };

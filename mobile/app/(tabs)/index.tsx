@@ -1,16 +1,19 @@
-import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState, useRef, useEffect } from "react";
+import { router } from "expo-router";
+import { useEffect, useRef } from "react";
+import { supabase } from "@/services/supabase";
 import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
 import {type SwipeableMethods,} from "react-native-gesture-handler/ReanimatedSwipeable";
-import { deleteJournal, getCloudJournals, getLocalJournals } from "@/services/journal-service";
-import { Journal } from "@/types/journal";
 import { JournalRow, EmptyJournalsState } from "@/components";
-import { requireAuth } from "@/services/auth-service";
-import { supabase } from "@/services/supabase";
+import { useJournalsQuery } from "@/hooks/use-journals-query";
+import { useDeleteJournalMutation} from "@/hooks/use-journal-mutations";
+import { useQueryClient } from "@tanstack/react-query";
+import { journalKeys } from "@/queries/journal-keys";
 
 
 export default function JournalsScreen() {
-  const [journals, setJournals] = useState<Journal[]>([]);
+  const { data: journals = [] } = useJournalsQuery()
+  const deleteJournalMutation = useDeleteJournalMutation()
+  const queryClient = useQueryClient()
   const openedSwipeableRef = useRef<SwipeableMethods | null>(null)
 
   const closeOpenedSwipeable = () => {
@@ -25,9 +28,8 @@ export default function JournalsScreen() {
     openedSwipeableRef.current = ref
   }
 
-  const handleDelete = async (id: string) => {
-    await deleteJournal(id)
-    setJournals(journals => journals.filter(journal => journal.id !== id))
+  const handleDelete = (id: string) => {
+    deleteJournalMutation.mutate(id)
   }
   const renderRightAction = (id: string) => {
     return (
@@ -60,40 +62,15 @@ export default function JournalsScreen() {
     const {
       data: {subscription},
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if(!session?.user){setJournals([])}
-    })
-
-    return ()=>subscription.unsubscribe()
-  }, [])
-
-  useFocusEffect(
-    useCallback(() => {
-      let isActive = true;
-
-      const loadJournals = async () => {
-        try {
-          if(!isActive) return 
-          const user = await requireAuth()
-          
-          if (!user) {
-            setJournals([])
-            return
-          }
-
-          const localJournals = await getLocalJournals()
-          if (isActive) setJournals(localJournals)
-          
-          const cloudJournals = await getCloudJournals()
-          if(isActive) setJournals(cloudJournals)
-        } catch (err) {
-          console.log('failed to load journals, ', err)
-        }
+      if (!session?.user) {
+        queryClient.setQueryData(journalKeys.lists(), [])
+        queryClient.removeQueries({queryKey: journalKeys.details()})
+      } else {
+        queryClient.invalidateQueries({queryKey: journalKeys.lists()})
       }
-      loadJournals()
-
-      return ()=>{isActive = false}
-    }, []),
-  );
+    })
+    return () => subscription.unsubscribe()
+  }, [queryClient])
 
   return (
     <View style={styles.screen}>
@@ -111,7 +88,6 @@ export default function JournalsScreen() {
             renderRightAction={renderRightAction}
             onOpen={handleSwipeableOpen}
             closeOpenedSwipeable={closeOpenedSwipeable}
-
           />
         )}
       />

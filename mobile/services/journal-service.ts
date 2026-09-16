@@ -1,8 +1,5 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from '@/services/supabase'
 import { Journal, DbJournal, MoodLabel} from "@/types/journal";
-
-const JOURNAL_KEY = 'voice-journal-entries'
 
 export const mapDbJournalToJournal = (row: DbJournal): Journal => ({
   id: row.id,
@@ -47,15 +44,6 @@ export const mapJournalToDbJournal = (
   tags: journal.tags ?? null,
 });
 
-export const getLocalJournals = async (): Promise<Journal[]> => {
-    const existing = await AsyncStorage.getItem(JOURNAL_KEY)
-    return existing ? JSON.parse(existing) : []
-}
-
-export const cacheJournals = async (journals: Journal[]) => {
-    await AsyncStorage.setItem(JOURNAL_KEY, JSON.stringify(journals))
-}
-
 export const getCloudJournals = async (): Promise<Journal[]> => {
     const {
         data: { user },
@@ -76,11 +64,8 @@ export const getCloudJournals = async (): Promise<Journal[]> => {
         .order('created_at', { ascending: false })
     
     if (error) throw error
-    const journals = (data ?? []).map(mapDbJournalToJournal)
-
-    await cacheJournals(journals)
-
-    return journals
+    
+    return (data ?? []).map(mapDbJournalToJournal)
 }
 
 export const getJournalById = async (id: string): Promise<Journal | null> => {
@@ -131,11 +116,7 @@ export const saveJournal = async (transcript: string): Promise<Journal | null> =
     
     if (error) throw error
 
-    const savedJournal = mapDbJournalToJournal(data);
-    const localJournals = await getLocalJournals()
-    await cacheJournals([savedJournal, ...localJournals])
-
-    return savedJournal
+    return mapDbJournalToJournal(data)
 };
 
 export const updateJournalTranscript = async (id: string, transcript: string): Promise<Journal> => {
@@ -151,15 +132,7 @@ export const updateJournalTranscript = async (id: string, transcript: string): P
     
     if (error) throw error
     
-    const updatedJournal = mapDbJournalToJournal(data)
-
-    const localJournals = await getLocalJournals()
-
-    const updatedLocalJournals = localJournals.map(journal => journal.id === id ? updatedJournal: journal)
-    
-    await cacheJournals(updatedLocalJournals)
-
-    return updatedJournal
+    return mapDbJournalToJournal(data)
 }
 
 
@@ -168,10 +141,6 @@ export const deleteJournal = async (id: string): Promise<void> => {
     const { error } = await supabase.from('journals').delete().eq('id', id)
     
     if (error) throw error
-    
-    const localJournals = await getLocalJournals()
-
-    await cacheJournals(localJournals.filter(journal=>journal.id !== id))
 }
 
 export const getTodayJournal = async (): Promise<Journal | null> => {
@@ -203,8 +172,4 @@ export const saveOrAppendJournal = async (transcript: string) => {
 
         return await updateJournalTranscript(id, journalScript as string)
 
-}
-
-export const clearLocalJournals = async () => {
-    await AsyncStorage.removeItem(JOURNAL_KEY)
 }

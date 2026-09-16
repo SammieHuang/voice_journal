@@ -1,5 +1,3 @@
-/** @format */
-
 import { useState, useEffect } from "react";
 import {
   View,
@@ -11,12 +9,12 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import { Journal } from "@/types/journal";
 import {
-  getJournalById,
-  updateJournalTranscript,
-  deleteJournal,
-  saveJournal
-} from "@/services/journal-service";
+  useSaveJournalMutation,
+  useUpdateJournalMutation,
+  useDeleteJournalMutation
+} from "@/hooks/use-journal-mutations";
 import { JournalHeader, JournalScreenContent } from "@/components";
+import { useJournalQuery } from "@/hooks/use-journals-query";
 
 export default function JournalDetailScreen() {
   const { id, mode, transcript } = useLocalSearchParams<{
@@ -24,51 +22,65 @@ export default function JournalDetailScreen() {
     mode?: string;
     transcript?: string
   }>();
-  const [journal, setJournal] = useState<Journal | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(mode === 'edit');
-  const [isSaving, setIsSaving] = useState<boolean>(false)
-  const [draft, setDraft] = useState('')
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const isNew = id === 'new'
+
+  const isNew = id === "new";
+
+  const journalQuery = useJournalQuery(String(id))
+  const saveJournalMutation = useSaveJournalMutation()
+  const updateJournalMutation = useUpdateJournalMutation()
+  const deleteJournalMutation = useDeleteJournalMutation()
+
+  const journal = isNew ? null : journalQuery.data
+
+  const [isEditing, setIsEditing] = useState<boolean>(mode === 'edit' || isNew);
+  const [draft, setDraft] = useState(isNew ? transcript ?? '' : '')
+  const [newCreatedAt] = useState(()=>new Date().toISOString())
+  
+  useEffect(() => {
+    if (!isNew && journalQuery.data) {
+      setDraft(journalQuery.data.transcript ?? "");
+    }
+  }, [isNew, journalQuery.data?.id]);
 
   const handleCancel = () => {
+    if (isNew) {
+      router.replace('/')
+      return
+    }
     setDraft(journal?.transcript ?? '')
     setIsEditing(false)
   }
+const handleSave = () => {
+  if (!id || !draft.trim()) return;
 
-  const handleSave = async () => {
-    if (!id || !draft.trim()) return;
-
-    try {
-      setIsSaving(true)
-
-      if (isNew) {
-        const savedJournal = await saveJournal(draft)
+  if (isNew) {
+    saveJournalMutation.mutate(draft, {
+      onSuccess: (savedJournal) => {
         if (!savedJournal) {
-          Alert.alert('You need to login to save ')
-          router.replace("/profile")
-          return 
+          Alert.alert("You need to login to save");
+          router.replace("/profile");
+          return;
         }
-
         router.replace(`/journal/${savedJournal.id}`);
-        return
-       
-      }
-
-      const updatedJournal = await updateJournalTranscript(String(id), draft)
-
-      setJournal(updatedJournal)
-      setDraft(updatedJournal.transcript ?? "")
-      setIsEditing(false);
-      
-    } catch (err) {
-      console.log('Failed to update journal', err)
-    } finally {
-      setIsSaving(false)
-    }
+      },
+    });
+    return;
   }
 
-  const handleDelete = async () => {
+  updateJournalMutation.mutate(
+    { id: String(id), transcript: draft },
+    {
+      onSuccess: (updatedJournal) => {
+        setDraft(updatedJournal.transcript ?? "");
+        setIsEditing(false);
+      },
+    },
+  );
+};
+
+
+
+  const handleDelete =  () => {
     if (!id) return;
 
     if (isNew) {
@@ -76,65 +88,46 @@ export default function JournalDetailScreen() {
       return
     }
 
-    await deleteJournal(String(id))
-    router.replace("/")
+    deleteJournalMutation.mutate(String(id), {
+      onSuccess: ()=>router.replace('/')
+    })
   }
 
-  useEffect(() => {
-    if (!id) return;
-
-    if (isNew) {
-      const initialTranscript = transcript ?? ""
-      setJournal({
-        id: 'new',
-        createdAt: new Date().toISOString(),
-        transcript:initialTranscript
-      })
-      setDraft(initialTranscript)
-      setIsEditing(true)
-      setIsLoading(false)
-      return;
-    }
-
-
-    const loadJournal = async () => {
-      const savedJournal = await getJournalById(String(id));
-      setJournal(savedJournal);
-      setDraft(savedJournal?.transcript ?? '')
-      setIsLoading(false)
-
-    };
-
-    loadJournal();
-  }, [id, transcript, isNew]);
-
-  if (isLoading) {
-        return (
-          <View style={styles.screen}>
-            <Text style={styles.title}>Loading Journal</Text>
-          </View>
-        );
-  }
-
-  if (!isLoading && !journal) {
+  if (!isNew && journalQuery.isLoading) {
     return (
       <View style={styles.screen}>
-        <Text style={styles.title}>Journal not found</Text>
+        <Text style={styles.title}>Loading Journal</Text>
+      </View>
+    )
+  }
+  if (!isNew && journalQuery.isError) {
+    return (
+      <View style={styles.screen}>
+        <Text style={styles.title}>Failed to load journal</Text>
       </View>
     );
+  }
+  if (!isNew && !journalQuery.data) {
+    return (
+      <View style={styles.screen}>
+        <Text style={styles.title}>
+          Journal not found
+        </Text>
+      </View>
+    )
   }
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <JournalHeader
-        onBack={() => router.back()}
-        createdAt = {journal?.createdAt as string}
+        onBack={() => router.dismissTo('/')}
+        createdAt = {isNew ? newCreatedAt : (journal?.createdAt as string)}
       />
 
       <JournalScreenContent
         draft={draft}
         isEditing={isEditing}
-        isSaving={isSaving}
+        isSaving={saveJournalMutation.isPending || updateJournalMutation.isPending}
         onChangeDraft={setDraft}
         onStartEditing={() => setIsEditing(true)}
         onCancel={handleCancel}
