@@ -43,6 +43,10 @@ export default function JournalDetailScreen() {
   }, [isNew, journalQuery.data?.id]);
 
   const handleCancel = () => {
+    if (isNew) {
+      router.replace('/')
+      return
+    }
     setDraft(journal?.transcript ?? '')
     setIsEditing(false)
   }
@@ -96,7 +100,13 @@ const handleSave = () => {
       </View>
     )
   }
-
+  if (!isNew && journalQuery.isError) {
+    return (
+      <View style={styles.screen}>
+        <Text style={styles.title}>Failed to load journal</Text>
+      </View>
+    );
+  }
   if (!isNew && !journalQuery.data) {
     return (
       <View style={styles.screen}>
