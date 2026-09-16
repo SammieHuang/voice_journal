@@ -64,6 +64,7 @@ export default function JournalsScreen() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
         queryClient.setQueryData(journalKeys.lists(), [])
+        queryClient.removeQueries({queryKey: journalKeys.details()})
       } else {
         queryClient.invalidateQueries({queryKey: journalKeys.lists()})
       }

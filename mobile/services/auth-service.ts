@@ -1,4 +1,3 @@
-import { clearLocalJournals } from "./journal-service";
 import { supabase } from "./supabase";
 import { UserCredential } from "@/types/AppUser";
 
@@ -57,7 +56,6 @@ const logOut = async () => {
     try {
         const { error } = await supabase.auth.signOut()
         if (error) throw error
-        await clearLocalJournals()
     } catch (err) {
         console.log("Failed to log out", err)
         throw err
