@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { saveJournal, updateJournalTranscript, deleteJournal } from "@/services/journal-service";
+import { saveJournal, updateJournalTranscript, deleteJournal, saveOrAppendJournal } from "@/services/journal-service";
 import { journalKeys } from "@/queries/journal-keys";   
 
 export const useSaveJournalMutation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (transcript: string) => saveJournal(transcript),
+        mutationFn: (transcript: string) => saveOrAppendJournal(transcript),
         onSuccess: (savedJournal) => {
             if (!savedJournal) return;
             queryClient.setQueryData(journalKeys.detail(savedJournal.id), savedJournal)

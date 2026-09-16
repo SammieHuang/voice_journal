@@ -110,7 +110,7 @@ const handleSave = () => {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <JournalHeader
-        onBack={() => router.back()}
+        onBack={() => router.dismissTo('/')}
         createdAt = {isNew ? newCreatedAt : (journal?.createdAt as string)}
       />
 

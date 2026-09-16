@@ -64,6 +64,8 @@ export default function JournalsScreen() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
         queryClient.setQueryData(journalKeys.lists(), [])
+      } else {
+        queryClient.invalidateQueries({queryKey: journalKeys.lists()})
       }
     })
     return () => subscription.unsubscribe()
