@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.mobile"
@@ -17,7 +16,6 @@
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.RECORD_AUDIO",
@@ -55,7 +53,8 @@
       ],
       "expo-font",
       "expo-web-browser",
-      "expo-image"
+      "expo-image",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
