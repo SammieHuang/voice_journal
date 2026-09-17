@@ -44,6 +44,20 @@
         }
       ],
       [
+        "react-native-audio-api",
+        {
+          "iosMicrophonePermission": "Allow $(Voice Journal) to access your microphone for the on-device transcription spike.",
+          "androidPermissions": [
+            "android.permission.RECORD_AUDIO"
+          ]
+        }
+      ],
+      ["expo-build-properties",{
+        "ios": {
+          "deploymentTarget": "17.0"
+        }
+      }],
+      [
         "expo-audio",
         {
           "microphonePermission": "Allow $(Voice Journal) to access your microphone.",

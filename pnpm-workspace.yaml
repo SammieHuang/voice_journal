@@ -2,3 +2,8 @@ packages:
   - mobile
   - api
   - shared
+
+onlyBuiltDependencies:
+  - esbuild
+  - react-native-executorch
+  - unrs-resolver
