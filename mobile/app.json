@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.mobile"
+      "bundleIdentifier": "com.sammiehuang.voicejournal",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +26,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "package": "com.anonymous.mobile"
+      "package": "com.sammiehuang.voicejournal"
     },
     "web": {
       "output": "static",
@@ -52,11 +55,14 @@
           ]
         }
       ],
-      ["expo-build-properties",{
-        "ios": {
-          "deploymentTarget": "17.0"
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "17.0"
+          }
         }
-      }],
+      ],
       [
         "expo-audio",
         {
@@ -73,6 +79,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2beabc45-eedf-413e-aff7-386af3003c73"
+      }
     }
   }
 }

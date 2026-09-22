@@ -6,7 +6,7 @@ import { AudioManager, AudioRecorder } from "react-native-audio-api";
 import { useSpeechToText, models } from "react-native-executorch";
 
 export default function SpikeTranscribeScreen() {
-  const stt = useSpeechToText(models.speechToText.WHISPER.EN.TINY.DEFAULT);
+  const stt = useSpeechToText(models.speechToText.WHISPER.EN.SMALL.DEFAULT);
 
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -76,7 +76,7 @@ export default function SpikeTranscribeScreen() {
         Model:{" "}
         {stt.isReady
           ? "ready"
-          : `loading ${Math.round((stt.downloadProgress ?? 0) * 100)}%`}
+          : `loading ${Math.round(stt.downloadProgress ?? 0)}%`}
       </Text>
       {stt.error && (
         <Text style={styles.error}>Model error: {String(stt.error)}</Text>

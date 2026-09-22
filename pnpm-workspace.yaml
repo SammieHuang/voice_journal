@@ -7,3 +7,6 @@ onlyBuiltDependencies:
   - esbuild
   - react-native-executorch
   - unrs-resolver
+
+patchedDependencies:
+  expo-modules-jsi@57.1.0: patches/expo-modules-jsi@57.1.0.patch
