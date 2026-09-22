@@ -1,4 +1,5 @@
-import { JournalViewer, JournalEditor } from "@/components/index";
+import { JournalViewer } from "../JournalViewer/JournalView";
+import { JournalEditor } from "../JournalEditor/JournalEditor";
 
 type JournalScreenContentProps = {
   isEditing: boolean;
@@ -33,9 +34,6 @@ export default function JournalScreenContent(props: JournalScreenContentProps) {
       isSaving={isSaving}
     />
   ) : (
-    <JournalViewer
-      transcript={draft}
-      onLongPress={onStartEditing}
-    />
+    <JournalViewer transcript={draft} onLongPress={onStartEditing} />
   );
 }
