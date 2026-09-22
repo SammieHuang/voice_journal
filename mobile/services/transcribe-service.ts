@@ -2,7 +2,7 @@ import {File} from "expo-file-system"
 
 async function transcribeAudio(uri: string) {
     const formData = new FormData()
-    const API_BASE_URL = "http://192.168.4.70:3000";
+    const API_BASE_URL = "http://192.168.4.26:3000";
 
     const audioFile = new File(uri)
     formData.append('audio', audioFile, 'recording.m4a')

@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.mobile"
+      "bundleIdentifier": "com.sammiehuang.voicejournal",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +26,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "package": "com.anonymous.mobile"
+      "package": "com.sammiehuang.voicejournal"
     },
     "web": {
       "output": "static",
@@ -44,6 +47,23 @@
         }
       ],
       [
+        "react-native-audio-api",
+        {
+          "iosMicrophonePermission": "Allow $(Voice Journal) to access your microphone to record the journal entries.",
+          "androidPermissions": [
+            "android.permission.RECORD_AUDIO"
+          ]
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "17.0"
+          }
+        }
+      ],
+      [
         "expo-audio",
         {
           "microphonePermission": "Allow $(Voice Journal) to access your microphone.",
@@ -59,6 +79,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2beabc45-eedf-413e-aff7-386af3003c73"
+      }
     }
   }
 }
