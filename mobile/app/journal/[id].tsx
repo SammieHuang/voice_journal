@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Alert
+  Alert,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Journal } from "@/types/journal";
@@ -34,14 +36,14 @@ export default function JournalDetailScreen() {
 
   const [isEditing, setIsEditing] = useState<boolean>(mode === 'edit' || isNew);
   const [draft, setDraft] = useState(isNew ? transcript ?? '' : '')
-  const [newCreatedAt] = useState(()=>new Date().toISOString())
-  
-  useEffect(() => {
-    if (!isNew && journalQuery.data) {
-      setDraft(journalQuery.data.transcript ?? "");
-    }
-  }, [isNew, journalQuery.data?.id]);
+  const [newCreatedAt] = useState(() => new Date().toISOString())
+  const [syncedId, setSyncedId] = useState<string | undefined>(undefined)
 
+  if (!isNew && journalQuery.data && journalQuery.data.id !== syncedId) {
+    setSyncedId(journalQuery.data.id)
+    setDraft(journalQuery.data.transcript ?? '')
+  }
+  
   const handleCancel = () => {
     if (isNew) {
       router.replace('/')
@@ -50,36 +52,33 @@ export default function JournalDetailScreen() {
     setDraft(journal?.transcript ?? '')
     setIsEditing(false)
   }
-const handleSave = () => {
-  if (!id || !draft.trim()) return;
+  const handleSave = () => {
+    if (!id || !draft.trim()) return;
 
-  if (isNew) {
-    saveJournalMutation.mutate(draft, {
-      onSuccess: (savedJournal) => {
-        if (!savedJournal) {
-          Alert.alert("You need to login to save");
-          router.replace("/profile");
-          return;
-        }
-        router.replace(`/journal/${savedJournal.id}`);
+    if (isNew) {
+      saveJournalMutation.mutate(draft, {
+        onSuccess: (savedJournal) => {
+          if (!savedJournal) {
+            Alert.alert("You need to login to save");
+            router.replace("/profile");
+            return;
+          }
+          router.replace(`/journal/${savedJournal.id}`);
+        },
+      });
+      return;
+    }
+
+    updateJournalMutation.mutate(
+      { id: String(id), transcript: draft },
+      {
+        onSuccess: (updatedJournal) => {
+          setDraft(updatedJournal.transcript ?? "");
+          setIsEditing(false);
+        },
       },
-    });
-    return;
-  }
-
-  updateJournalMutation.mutate(
-    { id: String(id), transcript: draft },
-    {
-      onSuccess: (updatedJournal) => {
-        setDraft(updatedJournal.transcript ?? "");
-        setIsEditing(false);
-      },
-    },
-  );
-};
-
-
-
+    );
+  };
   const handleDelete =  () => {
     if (!id) return;
 
@@ -118,23 +117,29 @@ const handleSave = () => {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <JournalHeader
-        onBack={() => router.dismissTo('/')}
-        createdAt = {isNew ? newCreatedAt : (journal?.createdAt as string)}
-      />
-
-      <JournalScreenContent
-        draft={draft}
-        isEditing={isEditing}
-        isSaving={saveJournalMutation.isPending || updateJournalMutation.isPending}
-        onChangeDraft={setDraft}
-        onStartEditing={() => setIsEditing(true)}
-        onCancel={handleCancel}
-        onSave={handleSave}
-        onDelete={handleDelete}
-      />
-    </ScrollView>
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView contentContainerStyle={styles.content}>
+        <JournalHeader
+          onBack={() => router.dismissTo("/")}
+          createdAt={isNew ? newCreatedAt : (journal?.createdAt as string)}
+        />
+        <JournalScreenContent
+          draft={draft}
+          isEditing={isEditing}
+          isSaving={
+            saveJournalMutation.isPending || updateJournalMutation.isPending
+          }
+          onChangeDraft={setDraft}
+          onStartEditing={() => setIsEditing(true)}
+          onCancel={handleCancel}
+          onSave={handleSave}
+          onDelete={handleDelete}
+        />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
