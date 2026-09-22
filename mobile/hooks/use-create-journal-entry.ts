@@ -9,7 +9,7 @@ import {
 import { useState, useEffect } from "react";
 import { router } from "expo-router";
 import { RecordStatusTypes } from "@/types/types";
-import { transcribeAudio } from "@/services/transcribe-service";
+import { useTranscription } from "./use-transcription";
 import { requireAuth} from "@/services/auth-service";
 
 export default function useCreateJournalEntry() {
@@ -18,6 +18,7 @@ export default function useCreateJournalEntry() {
   const [recordStatus, setRecordStatus] = useState<RecordStatusTypes>('idle')
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const [transcript, setTranscript] = useState<string | null>(null);
+  const { isReady, transcribe } = useTranscription()
 
   useEffect(() => {
     AudioModule.requestRecordingPermissionsAsync()
@@ -60,11 +61,15 @@ export default function useCreateJournalEntry() {
   };
 
   const startTranscribe = async () => {
-      if (!audioUri || isTranscribing) return;
+    if (!audioUri || isTranscribing) return;
+    if (!isReady) {
+      alert('Transcription is still loading, try again in a moment')
+      return
+    }
       try {
         setIsTranscribing(true);
         setRecordStatus("transcribing");
-        const text = await transcribeAudio(audioUri);
+        const text = await transcribe(audioUri);
         
         setTranscript(text);  
         setRecordStatus("preview");
