@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import Purchases from 'react-native-purchases'
+import { supabase } from "@/services/supabase";
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient } from '@tanstack/react-query';
@@ -26,15 +29,32 @@ const queryClient = new QueryClient({
 const asyncStoragePersister = createAsyncStoragePersister({storage: AsyncStorage})
 
 export default function RootLayout() {
-    const [fontsLoaded] = useFonts({
-      SpecialElite_400Regular,
-      Kalam_300Light,
-      Kalam_400Regular,
-      Kalam_700Bold,
+  const [fontsLoaded] = useFonts({
+    SpecialElite_400Regular,
+    Kalam_300Light,
+    Kalam_400Regular,
+    Kalam_700Bold,
+  }); 
+  useEffect(() => {
+    Purchases.configure({
+      apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY!,
     });
-    if (!fontsLoaded) {
-      return null;
-    }
+  }, [])
+
+  useEffect(() => {
+    const { data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        Purchases.logIn(session.user.id)
+      } else {
+        Purchases.logOut()
+      }
+    })
+    return ()=>subscription.unsubscribe() 
+  }, [])
+  if (!fontsLoaded) {
+    return null;
+  }
   return (
     <PersistQueryClientProvider
       client={queryClient}
