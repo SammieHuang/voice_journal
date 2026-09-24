@@ -26,8 +26,6 @@ transcribeRouter.post("/", upload.single('audio'), async (req, res) => {
      }
 
   const transcript = await transcribeAudio(req.file.path)
-  console.log(req.file.path)
-  console.log('transcript: ', transcript)
 
     res.json({
     message: transcript,

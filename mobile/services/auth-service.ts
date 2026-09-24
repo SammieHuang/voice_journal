@@ -21,7 +21,6 @@ const signUp = async (
 
 const logIn = async ({ email, password }: UserCredential) => {
     try {
-      console.log(email, password)
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
