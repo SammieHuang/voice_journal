@@ -3,14 +3,21 @@
 import { useEffect, useState } from "react";
 import { View, StyleSheet, Alert } from "react-native";
 import { router } from "expo-router";
-
+import { useQueryClient } from "@tanstack/react-query";
+import Purchases from "react-native-purchases";
+import RevenueCatUI, {PAYWALL_RESULT} from 'react-native-purchases-ui'
 import { supabase } from "@/services/supabase";
 import { Button, Typography, Surface } from "@/components/ui";
 import { theme } from "@/design-system";
 import { logOut } from "@/services/auth-service";
+import { useProfileQuery } from "@/hooks/use-profile-query";
+
+const ENTITLEMENT_ID = 'my_private_mind_pro'
 
 export default function ProfileScreen() {
   const [email, setEmail] = useState<string | null>(null);
+  const queryClient = useQueryClient()
+  const {data : profile} = useProfileQuery()
 
   useEffect(() => {
     const loadUser = async () => {
@@ -42,7 +49,43 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleUpgrade = async () => {
+    const result = await RevenueCatUI.presentPaywallIfNeeded({
+      requiredEntitlementIdentifier: ENTITLEMENT_ID,
+    })
+
+    if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
+      const customerInfo = await Purchases.getCustomerInfo()
+      const isActive = !!customerInfo.entitlements.active[ENTITLEMENT_ID]
+
+      if (isActive) {
+        Alert.alert('Welcome to Pro!', 'Cloud transcription is now unlocked')
+      }
+
+      queryClient.invalidateQueries({queryKey: ['profile']})
+    }
+  }
+
+  const handleRestore = async () => {
+    try {
+      const customerInfo = await Purchases.restorePurchases()
+      const isActive = !!customerInfo.entitlements.active[ENTITLEMENT_ID]
+
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      
+      Alert.alert(
+        isActive ? 'Restored' : 'Nothing to Restore', 
+        isActive
+          ? 'Your Pro subscription has been restored.'
+          : 'No active subscription was found for this account',
+      )
+    } catch (err) {
+      Alert.alert('Restore Failed', (err as Error).message)
+    }
+  }
+
   const isLoggedIn = Boolean(email);
+  const isPremium = profile?.tier === 'premium'
 
   return (
     <View style={styles.container}>
@@ -65,9 +108,27 @@ export default function ProfileScreen() {
               {email}
             </Typography>
 
-            <Button variant="danger" onPress={handleLogout}>
-              Log Out
-            </Button>
+            <Typography variant="subtitle" style={styles.subtitle}>
+              Plan
+            </Typography>
+
+            <Typography variant="body" style={styles.email}>
+              {isPremium ? 'Pro' : 'Free'}
+            </Typography>
+
+            <View style={styles.buttonGroup}>
+              {!isPremium && (
+                <Button onPress={handleUpgrade}>
+                  Upgrade to Pro
+                </Button>
+              )}
+              <Button variant='secondary' onPress={handleRestore}>
+                Restore Purchases
+              </Button>
+              <Button variant='danger' onPress={handleLogout}>
+                Log Out
+              </Button>
+            </View>
           </>
         ) : (
           <>
