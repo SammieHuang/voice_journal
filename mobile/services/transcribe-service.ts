@@ -1,4 +1,5 @@
-import {File} from "expo-file-system"
+import { File } from "expo-file-system"
+import { supabase } from "./supabase";
 
 async function transcribeAudio(uri: string) {
     const formData = new FormData()
@@ -7,9 +8,14 @@ async function transcribeAudio(uri: string) {
     const audioFile = new File(uri)
     formData.append('audio', audioFile, 'recording.m4a')
 
+    const {data: {session}} = await supabase.auth.getSession()
+
     const response = await fetch(`${API_BASE_URL}/transcribe`, {
         method: 'POST',
-        body: formData
+        body: formData, 
+        headers: {
+            Authorization: `Bearer ${session?.access_token}`
+        }
     })
 
     if (!response.ok) {

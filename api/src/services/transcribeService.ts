@@ -8,7 +8,6 @@ const transcribeAudio = async (path: string) => {
     file: fs.createReadStream(path),
     model: "gpt-4o-mini-transcribe",
   });
-    console.log("transcription: ", transcription)
 
   return transcription.text;
 };

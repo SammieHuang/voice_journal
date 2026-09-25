@@ -2,6 +2,7 @@ import { Router } from 'express'
 import path from 'path'
 import multer from 'multer'
 import { transcribeAudio } from '../services/transcribeService';
+import { requirePremium } from '../middleware/requirePremium';
 
 const transcribeRouter = Router()
 
@@ -15,7 +16,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({storage})
 
-transcribeRouter.post("/", upload.single('audio'), async (req, res) => {
+transcribeRouter.post("/", requirePremium, upload.single('audio'), async (req, res) => {
     
      if (!req.file) {
        console.log("No file!");
