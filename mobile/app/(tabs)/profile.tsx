@@ -17,7 +17,7 @@ const ENTITLEMENT_ID = 'my_private_mind_pro'
 export default function ProfileScreen() {
   const [email, setEmail] = useState<string | null>(null);
   const queryClient = useQueryClient()
-  const {data : profile} = useProfileQuery()
+  const {data : profile, isFetching: isProfileFetching} = useProfileQuery()
 
   useEffect(() => {
     const loadUser = async () => {
@@ -113,7 +113,7 @@ export default function ProfileScreen() {
             </Typography>
 
             <Typography variant="body" style={styles.email}>
-              {isPremium ? 'Pro' : 'Free'}
+              {isProfileFetching ? '...': (isPremium ? 'Pro' : 'Free')}
             </Typography>
 
             <View style={styles.buttonGroup}>

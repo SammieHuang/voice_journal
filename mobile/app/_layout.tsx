@@ -49,6 +49,7 @@ export default function RootLayout() {
       } else {
         Purchases.logOut()
       }
+      queryClient.invalidateQueries({queryKey: ['profile']})
     })
     return ()=>subscription.unsubscribe() 
   }, [])
