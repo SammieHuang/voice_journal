@@ -15,4 +15,5 @@ node_modules
 dist
 build
 
-uploads
+api/uploads/*
+!api/uploads/.gitkeep
