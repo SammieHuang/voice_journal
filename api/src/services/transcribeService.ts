@@ -1,5 +1,3 @@
-/** @format */
-
 import fs from "fs";
 import openai from "../lib/openai";
 
