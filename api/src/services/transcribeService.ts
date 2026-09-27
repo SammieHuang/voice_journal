@@ -9,6 +9,8 @@ const transcribeAudio = async (path: string) => {
     model: "gpt-4o-mini-transcribe",
   });
 
+  fs.unlink(path, ()=>{})
+
   return transcription.text;
 };
 
