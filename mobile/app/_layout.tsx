@@ -35,27 +35,37 @@ export default function RootLayout() {
     Kalam_400Regular,
     Kalam_700Bold,
   }); 
+
+  const isRevenueCatConfigured =
+    !process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY?.startsWith("test_");
   useEffect(() => {
-    Purchases.configure({
-      apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY!,
-    });
-  }, [])
+    if (isRevenueCatConfigured) {
+      Purchases.configure({
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY!,
+      });
+    }
+  }, []);
 
   useEffect(() => {
-    const { data: { subscription }
+    const {
+      data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        Purchases.logIn(session.user.id)
-      } else {
-        Purchases.logOut()
+      if (isRevenueCatConfigured) {
+        if (session?.user) {
+          Purchases.logIn(session.user.id);
+        } else {
+          Purchases.logOut();
+        }
       }
-      queryClient.invalidateQueries({queryKey: ['profile']})
-    })
-    return ()=>subscription.unsubscribe() 
-  }, [])
-  if (!fontsLoaded) {
-    return null;
-  }
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+    if (!fontsLoaded) {
+      return null;
+    }
+  
   return (
     <PersistQueryClientProvider
       client={queryClient}
