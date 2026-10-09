@@ -61,5 +61,21 @@ const logOut = async () => {
     }
 }
 
-export { signUp, logIn, logOut, getCurrentUser, requireAuth}
+const deleteAccount = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Not logged in')
+    
+    const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/account`, {
+        method: 'DELETE', 
+        headers:{ Authorization:`Bearer ${session.access_token}`}
+    })
+    if (!response.ok) {
+        const body = await response.json().catch(()=>({}))
+        throw new Error(body.error ?? `Failed to delete account (${response.status})`)
+    }
+
+    await supabase.auth.signOut({scope:'local'})
+}
+
+export { signUp, logIn, logOut, getCurrentUser, requireAuth, deleteAccount}
 

@@ -9,10 +9,14 @@ import RevenueCatUI, {PAYWALL_RESULT} from 'react-native-purchases-ui'
 import { supabase } from "@/services/supabase";
 import { Button, Typography, Surface } from "@/components/ui";
 import { theme } from "@/design-system";
-import { logOut } from "@/services/auth-service";
+import { logOut, deleteAccount } from "@/services/auth-service";
 import { useProfileQuery } from "@/hooks/use-profile-query";
 
 const ENTITLEMENT_ID = 'my_private_mind_pro'
+const DELETE_ACCOUNT_MESSAGE =
+  "This permanently deletes your account and all your journals. This cannot be undone.\n\n" +
+  "If you have an active subscription, deleting your account does NOT cancel it. " +
+  "Cancel it in your device Settings > Apple ID > Subscriptions.";
 
 export default function ProfileScreen() {
   const [email, setEmail] = useState<string | null>(null);
@@ -48,6 +52,27 @@ export default function ProfileScreen() {
       Alert.alert("Log Out Failed", (err as Error).message)
     }
   };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      DELETE_ACCOUNT_MESSAGE,
+      [{ text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount()
+              queryClient.clear()
+            } catch (e) {
+              Alert.alert('Delete Failed', (e as Error).message)
+            }
+          }
+        },     
+      ]
+    )
+  }
 
   const handleUpgrade = async () => {
     const result = await RevenueCatUI.presentPaywallIfNeeded({
@@ -127,6 +152,9 @@ export default function ProfileScreen() {
               </Button>
               <Button variant='danger' onPress={handleLogout}>
                 Log Out
+              </Button>
+              <Button variant="secondary" onPress = {handleDeleteAccount}>
+                Delete Account
               </Button>
             </View>
           </>
