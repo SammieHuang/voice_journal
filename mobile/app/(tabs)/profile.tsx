@@ -1,7 +1,7 @@
 /** @format */
 
 import { useEffect, useState } from "react";
-import { View, StyleSheet, Alert } from "react-native";
+import { View, StyleSheet, Alert, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import Purchases from "react-native-purchases";
@@ -136,10 +136,17 @@ export default function ProfileScreen() {
             <Typography variant="subtitle" style={styles.subtitle}>
               Plan
             </Typography>
-
-            <Typography variant="body" style={styles.email}>
-              {isProfileFetching ? '...': (isPremium ? 'Pro' : 'Free')}
-            </Typography>
+            <View style={styles.planRow}>
+              {
+                isProfileFetching ? (
+                <ActivityIndicator size='small' color={theme.colors.brand} />
+                ): (
+                  <Typography variant="body" style={styles.planText}>
+                    {isPremium ? 'Pro' : 'Free'}
+                  </Typography>
+                )
+            }
+            </View>
 
             <View style={styles.buttonGroup}>
               {!isPremium && (
@@ -220,4 +227,13 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     marginTop: theme.spacing.sm,
   },
+  planRow: {
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.xxl
+  },
+  planText: {
+    fontWeight: '600'
+  }
 });
