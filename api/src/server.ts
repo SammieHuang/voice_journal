@@ -1,29 +1,14 @@
-/** @format */
-
-import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
-import transcribeRouter from "./routes/transcribe";
-import { accountRouter } from "./routes/accounts";
+import { createApp } from "./app";
+import { getProDailyTranscriptionLimit } from "./lib/config";
 
 dotenv.config();
 
-const app = express();
+const app = createApp()
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
-
-app.get("/health", (_req, res) => {
-  res.json({
-    ok: true,
-    message: "Voice Journal API is running",
-  });
-});
-
-app.use('/transcribe', transcribeRouter)
-app.use('/account', accountRouter)
 
 app.listen(PORT, () => {
   console.log(`Judi's radio station broadcasting 24/7 at http://localhost:${PORT}`);
+  console.log( `Pro cloud transcription limit: ${getProDailyTranscriptionLimit()} per UTC day`)
 });
