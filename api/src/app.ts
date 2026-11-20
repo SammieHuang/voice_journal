@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import transcribeRouter from './routes/transcribe'
+import { createTranscribeRouter } from './routes/transcribe'
 import { accountRouter } from './routes/accounts'
 import { getProDailyTranscriptionLimit } from './lib/config'
 
@@ -20,7 +20,7 @@ const createApp = () => {
         })
     })
 
-    app.use('/transcribe', transcribeRouter)
+    app.use('/transcribe', createTranscribeRouter({dailyLimit}))
     app.use('/account', accountRouter)
 
     return app
