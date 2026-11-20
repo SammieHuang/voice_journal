@@ -128,6 +128,12 @@ const createTranscribeRouter = ({ dailyLimit }: TranscribeRouterOptions) => {
         // Runs on every path -- success, 429, 503, 502 -- before the response is sent.
         await deleteTempFile(filePath);
       }
+      if (outcome.status !== 200) {
+        console.warn(
+          `POST /transcribe -> ${outcome.status} ${outcome.body.error}`,
+        );
+      }
+
 
       if (outcome.headers) res.set(outcome.headers);
       res.status(outcome.status).json(outcome.body);
