@@ -1,0 +1,8 @@
+{
+  "name": "@voice-journal/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Values the API and the mobile app must agree on.",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}
