@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import fs from "fs";
 import multer from "multer";
 import { transcribeAudio } from "../services/transcribeService";
@@ -10,7 +10,54 @@ import {
 import { requirePremium } from "../middleware/requirePremium";
 import { createTempAudioStorage } from "../lib/tempAudioStorage";
 
-const upload = multer({ storage: createTempAudioStorage("uploads") });
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10 MB
+
+const upload = multer({
+  storage: createTempAudioStorage("uploads"),
+  // busboy (multer's parser) flags the limit when a file *reaches* fileSize,
+  // so +1 lets exactly 10 MB through and rejects anything bigger.
+  limits: { fileSize: MAX_AUDIO_BYTES + 1, files: 1 },
+});
+
+/**
+ * Receives the "audio" file and turns upload problems into JSON answers
+ * instead of Express's default HTML error page. Any partial file has
+ * already been deleted by the time we get here.
+ */
+const receiveAudio: RequestHandler = (req, res, next) => {
+  upload.single("audio")(req, res, (err: unknown) => {
+    if (!err) return next();
+
+    // Client disconnected mid-upload: nobody is listening for an answer.
+    if (req.socket.destroyed || res.headersSent) return;
+
+    if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+      return res.status(413).json({
+        error: "file_too_large",
+        message: "Audio files can be at most 10 MB.",
+        maxBytes: MAX_AUDIO_BYTES,
+      });
+    }
+    // File system errors (disk full, no permission) have a `syscall`.
+    // Anything else is a bad request: wrong field name, two files, broken body...
+    if (
+      err instanceof multer.MulterError ||
+      !(err as NodeJS.ErrnoException).syscall
+    ) {
+      return res.status(400).json({
+        error: "invalid_upload",
+        message:
+          'Send the recording as a single file in the "audio" form field.',
+      });
+    }
+    console.error("Saving upload failed", err);
+    return res.status(500).json({
+      error: "upload_failed",
+      message: "Could not receive the recording. Please try again.",
+    });
+  });
+};
+
 
 type TranscribeRouterOptions = {
   /** Max cloud transcriptions per Pro account per UTC day. */
@@ -102,7 +149,7 @@ const createTranscribeRouter = ({ dailyLimit }: TranscribeRouterOptions) => {
   transcribeRouter.post(
     "/",
     requirePremium,
-    upload.single("audio"),
+    receiveAudio,
     async (req, res) => {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -135,4 +182,4 @@ const createTranscribeRouter = ({ dailyLimit }: TranscribeRouterOptions) => {
   return transcribeRouter;
 };
 
-export { createTranscribeRouter };
+export { createTranscribeRouter, MAX_AUDIO_BYTES };
