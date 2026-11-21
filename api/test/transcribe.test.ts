@@ -1,5 +1,5 @@
-/** @format */
-
+import fs from "fs";
+import { MAX_AUDIO_BYTES } from "../src/routes/transcribe";
 import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PGlite } from "@electric-sql/pglite";
@@ -12,6 +12,8 @@ import {
   resetBackends,
   holdNextConsumeCalls,
 } from "./helpers/fakeBackends";
+import http from "http";
+import type { AddressInfo } from "net";
 
 // Swap the real Supabase and OpenAI clients for the fakes.
 vi.mock("../src/lib/supabase", async () =>
@@ -46,10 +48,10 @@ const nextUtcMidnight = (day: string) => {
 };
 
 /** POST /transcribe the way the mobile app does. */
-const transcribe = (app: Express, token?: string) => {
+const transcribe = (app: Express, token?: string, audio = FAKE_AUDIO) => {
   const req = request(app).post("/transcribe");
   if (token) req.set("Authorization", `Bearer ${token}`);
-  return req.attach("audio", FAKE_AUDIO, "recording.m4a");
+  return req.attach("audio", audio, "recording.m4a");
 };
 
 beforeAll(async () => {
@@ -66,6 +68,8 @@ beforeEach(async () => {
     await db.query("insert into auth.users (id) values ($1)", [user.id]);
   }
   delete process.env[DAILY_LIMIT_ENV];
+  fs.rmSync("uploads", { recursive: true, force: true });
+  fs.mkdirSync("uploads");
 });
 
 describe("POST /transcribe", () => {
@@ -150,5 +154,64 @@ describe("POST /transcribe", () => {
     expect([first.status, second.status].sort()).toEqual([200, 429]);
     expect(backends.openaiCalls).toBe(2);
     expect(await usageCount(db, PRO.id)).toBe(2);
+  });
+
+  it("10 MB + 1 byte -> 413, nothing counted, no temp file left", async () => {
+    const tooBig = Buffer.alloc(MAX_AUDIO_BYTES + 1);
+    const res = await transcribe(createApp(), PRO.token, tooBig);
+    expect(res.status).toBe(413);
+    expect(res.body.error).toBe("file_too_large");
+    expect(backends.rpcCalls).toEqual([]);
+    expect(fs.readdirSync("uploads")).toEqual([]);
+  });
+
+  it("exactly 10 MB -> accepted, temp file deleted afterwards", async () => {
+    const justRight = Buffer.alloc(MAX_AUDIO_BYTES);
+    const res = await transcribe(createApp(), PRO.token, justRight);
+    expect(res.status).toBe(200);
+    expect(fs.readdirSync("uploads")).toEqual([]);
+  });
+
+  it("wrong field name -> JSON 400, no temp file left", async () => {
+    const res = await request(createApp())
+      .post("/transcribe")
+      .set("Authorization", `Bearer ${PRO.token}`)
+      .attach("file", FAKE_AUDIO, "recording.m4a");
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("invalid_upload");
+    expect(fs.readdirSync("uploads")).toEqual([]);
+  });
+
+  it("client disconnects halfway -> partial file deleted", async () => {
+    const server = createApp().listen(0);
+    try {
+      const { port } = server.address() as AddressInfo;
+      const boundary = "----test";
+      const req = http.request({
+        port,
+        method: "POST",
+        path: "/transcribe",
+        headers: {
+          Authorization: `Bearer ${PRO.token}`,
+          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+          "Content-Length": String(5 * 1024 * 1024), // promise 5 MB...
+        },
+      });
+      req.on("error", () => {}); // we cut the connection ourselves below
+
+      // ...but only send the start of the file.
+      req.write(
+        `--${boundary}\r\n` +
+          `Content-Disposition: form-data; name="audio"; filename="r.m4a"\r\n\r\n`,
+      );
+      req.write(Buffer.alloc(512 * 1024));
+
+      await vi.waitFor(() => expect(fs.readdirSync("uploads")).toHaveLength(1));
+      req.destroy();
+      await vi.waitFor(() => expect(fs.readdirSync("uploads")).toEqual([]));
+      expect(backends.openaiCalls).toBe(0);
+    } finally {
+      server.close();
+    }
   });
 });
