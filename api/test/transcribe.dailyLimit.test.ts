@@ -7,7 +7,11 @@ import type { Express } from "express";
 import { createApp } from "../src/app";
 import { DAILY_LIMIT_ENV } from "../src/lib/config";
 import { createTestDb, usageCount, utcToday } from "./helpers/testDb";
-import { backends, resetBackends } from "./helpers/fakeBackends";
+import {
+  backends,
+  resetBackends,
+  holdNextConsumeCalls,
+} from "./helpers/fakeBackends";
 
 // Swap the real Supabase and OpenAI clients for the fakes.
 vi.mock("../src/lib/supabase", async () =>
@@ -130,5 +134,21 @@ describe("POST /transcribe", () => {
     expect(res.body).toEqual({ message: backends.transcript });
     expect(backends.openaiCalls).toBe(1);
     expect(await usageCount(db, PRO.id)).toBe(1);
+  });
+
+  it("last one left, two requests at once -> one 200, one 429", async () => {
+    process.env[DAILY_LIMIT_ENV] = "2";
+    const app = createApp();
+    expect((await transcribe(app, PRO.token)).status).toBe(200);
+
+    holdNextConsumeCalls(2);
+    const [first, second] = await Promise.all([
+      transcribe(app, PRO.token),
+      transcribe(app, PRO.token),
+    ]);
+
+    expect([first.status, second.status].sort()).toEqual([200, 429]);
+    expect(backends.openaiCalls).toBe(2);
+    expect(await usageCount(db, PRO.id)).toBe(2);
   });
 });

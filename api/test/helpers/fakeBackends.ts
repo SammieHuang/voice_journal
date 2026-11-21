@@ -22,6 +22,7 @@ type Backends = {
   /** If set, the OpenAI call throws this (to test 502 + refund). */
   openaiError: Error | null;
   transcript: string;
+  consumeBarrier: { count: number; waiting: (() => void)[] } | null;
 };
 
 const backends: Backends = {
@@ -32,6 +33,7 @@ const backends: Backends = {
   openaiCalls: 0,
   openaiError: null,
   transcript: "hello from the fake transcriber",
+  consumeBarrier: null,
 };
 
 /** Called before each test so one test can't affect the next. */
@@ -42,6 +44,12 @@ const resetBackends = (db: PGlite) => {
   backends.rpcError = null;
   backends.openaiCalls = 0;
   backends.openaiError = null;
+  backends.consumeBarrier = null;
+};
+
+/** Hold the next `count` daily-limit checks until all of them have arrived. */
+const holdNextConsumeCalls = (count: number) => {
+  backends.consumeBarrier = { count, waiting: [] };
 };
 
 /** Replaces src/lib/supabase. */
@@ -74,6 +82,16 @@ const fakeSupabaseModule = () => {
     // like Supabase's /rest/v1/rpc/<name> does.
     rpc: async (fn: string, args: Record<string, unknown>) => {
       backends.rpcCalls.push(fn);
+      const barrier = backends.consumeBarrier;
+      if (fn === "consume_cloud_transcription" && barrier) {
+        await new Promise<void>((resolve) => {
+          barrier.waiting.push(resolve);
+          if (barrier.waiting.length === barrier.count) {
+            backends.consumeBarrier = null;
+            barrier.waiting.forEach((release) => release());
+          }
+        });
+      }
       if (backends.rpcError) {
         return { data: null, error: { message: backends.rpcError } };
       }
@@ -114,4 +132,4 @@ const fakeOpenAIModule = () => ({
   },
 });
 
-export { backends, resetBackends, fakeSupabaseModule, fakeOpenAIModule };
+export { backends, resetBackends, fakeSupabaseModule, fakeOpenAIModule, holdNextConsumeCalls };
