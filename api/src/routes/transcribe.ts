@@ -1,6 +1,5 @@
 import { Router } from "express";
 import fs from "fs";
-import path from "path";
 import multer from "multer";
 import { transcribeAudio } from "../services/transcribeService";
 import {
@@ -9,16 +8,9 @@ import {
   reserveCloudTranscription,
 } from "../services/transcriptionQuotaService";
 import { requirePremium } from "../middleware/requirePremium";
+import { createTempAudioStorage } from "../lib/tempAudioStorage";
 
-const storage = multer.diskStorage({
-  destination: "uploads/",
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || ".m4a";
-    cb(null, `${Date.now()}${ext}`);
-  },
-});
-
-const upload = multer({ storage });
+const upload = multer({ storage: createTempAudioStorage("uploads") });
 
 type TranscribeRouterOptions = {
   /** Max cloud transcriptions per Pro account per UTC day. */
