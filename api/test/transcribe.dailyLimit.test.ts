@@ -5,7 +5,8 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PGlite } from "@electric-sql/pglite";
 import type { Express } from "express";
 import { createApp } from "../src/app";
-import { createTestDb, usageCount } from "./helpers/testDb";
+import { DAILY_LIMIT_ENV } from "../src/lib/config";
+import { createTestDb, usageCount, utcToday } from "./helpers/testDb";
 import { backends, resetBackends } from "./helpers/fakeBackends";
 
 // Swap the real Supabase and OpenAI clients for the fakes.
@@ -22,10 +23,23 @@ const PRO = {
   token: "pro-token",
 };
 
+const FREE = {
+  id: "bbbbbbbb-0000-0000-0000-000000000001",
+  tier: "free" as const,
+  token: "free-token",
+};
+
 // No duration check yet, so any bytes are accepted as "audio".
 const FAKE_AUDIO = Buffer.from("not really audio");
 
 let db: PGlite;
+
+/** Midnight UTC at the end of the given "YYYY-MM-DD" day. */
+const nextUtcMidnight = (day: string) => {
+  const date = new Date(`${day}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString();
+};
 
 /** POST /transcribe the way the mobile app does. */
 const transcribe = (app: Express, token?: string) => {
@@ -43,8 +57,11 @@ beforeEach(async () => {
     "truncate public.cloud_transcription_usage; delete from auth.users;",
   );
   resetBackends(db);
-  backends.usersByToken.set(PRO.token, { id: PRO.id, tier: PRO.tier });
-  await db.query("insert into auth.users (id) values ($1)", [PRO.id]);
+  for (const user of [PRO, FREE]) {
+    backends.usersByToken.set(user.token, { id: user.id, tier: user.tier });
+    await db.query("insert into auth.users (id) values ($1)", [user.id]);
+  }
+  delete process.env[DAILY_LIMIT_ENV];
 });
 
 describe("POST /transcribe", () => {
@@ -54,6 +71,57 @@ describe("POST /transcribe", () => {
     expect(res.body).toEqual({ error: "Missing token" });
     expect(backends.rpcCalls).toEqual([]);
     expect(backends.openaiCalls).toBe(0);
+  });
+
+  it("free account -> 403, nothing counted, OpenAI not called", async () => {
+    const res = await transcribe(createApp(), FREE.token);
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: "Premium subscription required" });
+    expect(backends.rpcCalls).toEqual([]);
+    expect(backends.openaiCalls).toBe(0);
+  });
+
+  it("over the daily limit -> 429 with when it resets, OpenAI not called", async () => {
+    process.env[DAILY_LIMIT_ENV] = "2";
+    const app = createApp();
+    const today = await utcToday(db);
+
+    expect((await transcribe(app, PRO.token)).status).toBe(200);
+    expect((await transcribe(app, PRO.token)).status).toBe(200);
+
+    const res = await transcribe(app, PRO.token);
+    expect(res.status).toBe(429);
+    expect(res.body).toMatchObject({
+      error: "daily_limit_reached",
+      limit: 2,
+      used: 2,
+      resetsAt: nextUtcMidnight(today),
+    });
+    const retryAfter = Number(res.headers["retry-after"]);
+    expect(retryAfter).toBeGreaterThan(0);
+    expect(retryAfter).toBeLessThanOrEqual(24 * 60 * 60);
+    expect(backends.openaiCalls).toBe(2);
+    expect(await usageCount(db, PRO.id)).toBe(2);
+  });
+
+  it("database error -> 503, OpenAI not called", async () => {
+    backends.rpcError = "connection refused";
+    const res = await transcribe(createApp(), PRO.token);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe("limit_check_unavailable");
+    expect(backends.openaiCalls).toBe(0);
+  });
+
+  it("OpenAI fails -> 502 and the transcription is given back", async () => {
+    backends.openaiError = new Error("OpenAI is down");
+    const res = await transcribe(createApp(), PRO.token);
+    expect(res.status).toBe(502);
+    expect(res.body.error).toBe("transcription_failed");
+    expect(backends.rpcCalls).toEqual([
+      "consume_cloud_transcription",
+      "release_cloud_transcription",
+    ]);
+    expect(await usageCount(db, PRO.id)).toBe(0);
   });
 
   it("pro account -> 200 with the transcript, counted once", async () => {
