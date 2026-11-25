@@ -14,6 +14,7 @@ import {
 } from "./helpers/fakeBackends";
 import http from "http";
 import type { AddressInfo } from "net";
+import path from "path";
 
 // Swap the real Supabase and OpenAI clients for the fakes.
 vi.mock("../src/lib/supabase", async () =>
@@ -36,7 +37,18 @@ const FREE = {
 };
 
 // No duration check yet, so any bytes are accepted as "audio".
-const FAKE_AUDIO = Buffer.from("not really audio");
+/** A real 1-second .m4a, generated with ffmpeg (see test/fixtures). */
+const ONE_SECOND_M4A = fs.readFileSync(
+  path.join(__dirname, "fixtures", "one-second.m4a"),
+);
+
+/** The 1-second recording padded to exactly `size` bytes with a "free" box (players skip it). */
+const recordingOfSize = (size: number) => {
+  const padding = Buffer.alloc(size - ONE_SECOND_M4A.length);
+  padding.writeUInt32BE(padding.length, 0);
+  padding.write("free", 4, "latin1");
+  return Buffer.concat([ONE_SECOND_M4A, padding]);
+};
 
 let db: PGlite;
 
@@ -48,7 +60,7 @@ const nextUtcMidnight = (day: string) => {
 };
 
 /** POST /transcribe the way the mobile app does. */
-const transcribe = (app: Express, token?: string, audio = FAKE_AUDIO) => {
+const transcribe = (app: Express, token?: string, audio = ONE_SECOND_M4A) => {
   const req = request(app).post("/transcribe");
   if (token) req.set("Authorization", `Bearer ${token}`);
   return req.attach("audio", audio, "recording.m4a");
@@ -166,7 +178,7 @@ describe("POST /transcribe", () => {
   });
 
   it("exactly 10 MB -> accepted, temp file deleted afterwards", async () => {
-    const justRight = Buffer.alloc(MAX_AUDIO_BYTES);
+    const justRight = recordingOfSize(MAX_AUDIO_BYTES);
     const res = await transcribe(createApp(), PRO.token, justRight);
     expect(res.status).toBe(200);
     expect(fs.readdirSync("uploads")).toEqual([]);
@@ -176,7 +188,7 @@ describe("POST /transcribe", () => {
     const res = await request(createApp())
       .post("/transcribe")
       .set("Authorization", `Bearer ${PRO.token}`)
-      .attach("file", FAKE_AUDIO, "recording.m4a");
+      .attach("file", ONE_SECOND_M4A, "recording.m4a");
     expect(res.status).toBe(400);
     expect(res.body.error).toBe("invalid_upload");
     expect(fs.readdirSync("uploads")).toEqual([]);
@@ -214,4 +226,35 @@ describe("POST /transcribe", () => {
       server.close();
     }
   });
+
+    it("exactly 5 minutes -> accepted", async () => {
+      const audio = fs.readFileSync(
+        path.join(__dirname, "fixtures", "five-minutes.m4a"),
+      );
+      const res = await transcribe(createApp(), PRO.token, audio);
+      expect(res.status).toBe(200);
+    });
+
+    it("6 minutes -> 413, nothing counted, OpenAI not called", async () => {
+      const audio = fs.readFileSync(
+        path.join(__dirname, "fixtures", "six-minutes.m4a"),
+      );
+      const res = await transcribe(createApp(), PRO.token, audio);
+      expect(res.status).toBe(413);
+      expect(res.body.error).toBe("recording_too_long");
+      expect(backends.rpcCalls).toEqual([]);
+      expect(backends.openaiCalls).toBe(0);
+    });
+  
+    it("not an m4a -> 415, nothing counted, OpenAI not called", async () => {
+      const res = await transcribe(
+        createApp(),
+        PRO.token,
+        Buffer.from("just some text"),
+      );
+      expect(res.status).toBe(415);
+      expect(res.body.error).toBe("unsupported_audio");
+      expect(backends.rpcCalls).toEqual([]);
+      expect(backends.openaiCalls).toBe(0);
+    });
 });

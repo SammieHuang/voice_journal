@@ -9,6 +9,11 @@ import {
 } from "../services/transcriptionQuotaService";
 import { requirePremium } from "../middleware/requirePremium";
 import { createTempAudioStorage } from "../lib/tempAudioStorage";
+import { describeSeconds, MAX_RECORDING_SECONDS } from "@voice-journal/shared";
+import {
+  measureM4aDuration,
+  UnsupportedAudioError,
+} from "../lib/audioDuration";
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -78,11 +83,60 @@ const deleteTempFile = async (filePath: string) => {
   }
 };
 
+/**
+ * AAC encoders pad the start and end, so an honest 5-minute recording
+ * measures slightly longer (e.g. 300.16 s). The grace keeps it from bouncing.
+ */
+const RECORDING_LENGTH_GRACE_SECONDS = 2;
+
+/** Rejects recordings that are too long, or that we can't measure. null = fine. */
+const checkRecordingLength = async (filePath: string): Promise<Outcome | null> => {
+  let seconds: number;
+  try {
+    seconds = (await measureM4aDuration(filePath)).seconds;
+  } catch (err) {
+    if (err instanceof UnsupportedAudioError) {
+      console.warn(`Rejected upload we can't measure: ${err.message}`);
+      return {
+        status: 415,
+        body: {
+          error: "unsupported_audio",
+          message: "Send the recording as an .m4a file with AAC audio.",
+        },
+      };
+    }
+    console.error("Measuring recording length failed", err);
+    return {
+      status: 500,
+      body: {
+        error: "length_check_failed",
+        message: "Could not check the recording. Please try again.",
+      },
+    };
+  }
+
+  if (seconds > MAX_RECORDING_SECONDS + RECORDING_LENGTH_GRACE_SECONDS) {
+    return {
+      status: 413,
+      body: {
+        error: "recording_too_long",
+        message: `Recordings can be at most ${describeSeconds(MAX_RECORDING_SECONDS)}.`,
+        maxSeconds: MAX_RECORDING_SECONDS,
+      },
+    };
+  }
+  return null;
+};
+
 const transcribeRecording = async (
   userId: string,
   filePath: string,
   dailyLimit: number,
 ): Promise<Outcome> => {
+  // Before the daily limit: a rejected recording doesn't use up a transcription.
+  const lengthProblem = await checkRecordingLength(filePath);
+  if (lengthProblem) return lengthProblem;
+
   let reservation;
   try {
     reservation = await reserveCloudTranscription(userId, dailyLimit);
