@@ -14,10 +14,18 @@ import { RecordStatusTypes } from "@/types/types";
 import { useTranscription } from "./use-transcription";
 import { requireAuth } from "@/services/auth-service";
 import { MAX_RECORDING_SECONDS, describeSeconds } from "@voice-journal/shared";
+import { getTodayJournal } from "@/services/journal-service";
+import {
+  CloudTranscriptionError,
+  describeFailure,
+} from "@/services/transcription-errors";
 
 export default function useCreateJournalEntry() {
   // expo-audio registers the listener below only once, so it must use only
   // refs and state setters -- state values read in there would be stale.
+
+  const [audioUri, setAudioUri] = useState<string | null>(null);
+  const [recordStatus, setRecordStatus] = useState<RecordStatusTypes>("idle");
   const recordingStartedAt = useRef<number | null>(null);
   const stopRequested = useRef(false);
 
@@ -56,8 +64,7 @@ export default function useCreateJournalEntry() {
     RecordingPresets.HIGH_QUALITY,
     handleRecorderStatus,
   );
-  const [audioUri, setAudioUri] = useState<string | null>(null);
-  const [recordStatus, setRecordStatus] = useState<RecordStatusTypes>("idle");
+
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const [transcript, setTranscript] = useState<string | null>(null);
   const { isReady, transcribe } = useTranscription();
@@ -107,6 +114,47 @@ export default function useCreateJournalEntry() {
     setAudioUri(recorder.uri);
   };
 
+  // Cloud transcription failed: drop the recording, say why, then open
+  // today's journal (or a new one) in edit mode so the user can type instead.
+  const handleCloudFailure = async (err: CloudTranscriptionError) => {
+    const { title, message } = describeFailure(err.failure);
+
+    let todayJournalId: string | null = null;
+    try {
+      todayJournalId = (await getTodayJournal())?.id ?? null;
+    } catch (lookupErr) {
+      // e.g. offline too: open a new journal instead.
+      console.log("Couldn't look up today's journal", lookupErr);
+    }
+
+    resetEntry();
+
+    const whatNext = todayJournalId
+      ? "The recording was discarded. Today's journal will open so you can type your entry instead."
+      : "The recording was discarded. A new journal will open so you can type your entry instead.";
+
+    Alert.alert(
+      title,
+      `${message}\n\n${whatNext}`,
+      [
+        {
+          text: "OK",
+          onPress: () =>
+            todayJournalId
+              ? router.push({
+                  pathname: "/journal/[id]",
+                  params: { id: todayJournalId, mode: "edit" },
+                })
+              : router.push({
+                  pathname: "/journal/[id]",
+                  params: { id: "new" },
+                }),
+        },
+      ],
+      { cancelable: false },
+    );
+  };
+
   const startTranscribe = async () => {
     if (!audioUri || isTranscribing) return;
     if (!isReady) {
@@ -122,7 +170,12 @@ export default function useCreateJournalEntry() {
       setRecordStatus("preview");
     } catch (err) {
       console.log(err);
-      setRecordStatus("readyToTranscribe");
+      if (err instanceof CloudTranscriptionError) {
+        await handleCloudFailure(err);
+      } else {
+        // On-device transcription failed: unchanged, the user can try again.
+        setRecordStatus("readyToTranscribe");
+      }
     } finally {
       setIsTranscribing(false);
     }
