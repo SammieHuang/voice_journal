@@ -25,6 +25,7 @@ const requirePremium = async (req: Request, res: Response, next: NextFunction) =
     if (profile?.tier !== 'premium') {
         return res.status(403).json({error: 'Premium subscription required'})
     }
+    res.locals.user = user
 
     next()
 }
